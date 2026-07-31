@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Environment & secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+*.keystore
+
+# System & IDE
+.DS_Store
+.vscode/
+.idea/
+
+# Testing
+coverage/
+.vitest/
+
+# Artifacts
+*.apk
+*.aab
+
+# Documentation
+docs/
