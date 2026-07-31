@@ -365,15 +365,16 @@ describe("Folder Management Tests (Phase 5)", { timeout: 30000 }, () => {
     const targetId = targetRes.body.data.folder.id;
     createdTopFolderIds.push(targetId);
 
-    await request(app)
+    const conflictName = `ConflictName-${crypto.randomUUID()}`;
+    const conflictRes = await request(app)
       .post("/api/folders")
       .set("Authorization", `Bearer ${adminToken}`)
-      .send({ name: "ConflictName", parentId: targetId });
+      .send({ name: conflictName, parentId: targetId });
 
     const sourceRes = await request(app)
       .post("/api/folders")
       .set("Authorization", `Bearer ${adminToken}`)
-      .send({ name: "ConflictName", parentId: null });
+      .send({ name: conflictName, parentId: null });
     const sourceId = sourceRes.body.data.folder.id;
     createdTopFolderIds.push(sourceId);
 
