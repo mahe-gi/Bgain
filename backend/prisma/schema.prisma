@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  VIEWER
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  folders Folder[] @relation("UserFolders")
+  files   File[]   @relation("UserFiles")
+
+  @@map("users")
+}
+
+model Folder {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @db.VarChar(120)
+  parentId    String?  @db.Uuid
+  createdById String   @db.Uuid
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  parent    Folder?  @relation("FolderToFolder", fields: [parentId], references: [id], onDelete: Cascade)
+  children  Folder[] @relation("FolderToFolder")
+  createdBy User     @relation("UserFolders", fields: [createdById], references: [id], onDelete: Restrict)
+  files     File[]
+
+  @@unique([parentId, name])
+  @@index([parentId])
+  @@index([createdById])
+  @@map("folders")
+}
+
+model File {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String   @db.VarChar(255)
+  storageKey   String   @unique
+  mimeType     String
+  sizeBytes    Int
+  folderId     String?  @db.Uuid
+  uploadedById String   @db.Uuid
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  folder     Folder? @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  uploadedBy User    @relation("UserFiles", fields: [uploadedById], references: [id], onDelete: Restrict)
+
+  @@unique([folderId, name])
+  @@index([folderId])
+  @@index([uploadedById])
+  @@map("files")
+}

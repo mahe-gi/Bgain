@@ -13,7 +13,8 @@ const envSchema = z.object({
   CORS_ORIGINS: z
     .string()
     .default("http://localhost:5173,http://localhost:3000")
-    .transform((val) => val.split(",").map((origin) => origin.trim()).filter(Boolean))
+    .transform((val) => val.split(",").map((origin) => origin.trim()).filter(Boolean)),
+  DATABASE_URL: z.string().min(1, "DATABASE_URL is required")
 });
 
 const parseEnv = () => {

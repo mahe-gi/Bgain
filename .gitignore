@@ -33,5 +33,9 @@ coverage/
 *.apk
 *.aab
 
+# Generated Code
+src/generated/
+backend/src/generated/
+
 # Documentation
 docs/
