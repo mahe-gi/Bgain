@@ -1,18 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { ApiResponse } from "../types/api.js";
-
-export class CustomError extends Error {
-  statusCode: number;
-  code: string;
-  details?: Record<string, unknown>;
-
-  constructor(statusCode: number, code: string, message: string, details?: Record<string, unknown>) {
-    super(message);
-    this.statusCode = statusCode;
-    this.code = code;
-    this.details = details;
-  }
-}
+import { AppError } from "../utils/app-error.js";
 
 export const notFoundHandler = (_req: Request, res: Response): void => {
   const response: ApiResponse = {
@@ -26,7 +14,7 @@ export const notFoundHandler = (_req: Request, res: Response): void => {
 };
 
 export const errorHandler = (
-  err: Error | CustomError | (Error & { status?: number; statusCode?: number }),
+  err: Error | AppError | (Error & { status?: number; statusCode?: number }),
   _req: Request,
   res: Response,
   _next: NextFunction
@@ -58,15 +46,17 @@ export const errorHandler = (
   }
 
   const statusCode =
-    err instanceof CustomError
+    err instanceof AppError
       ? err.statusCode
+      : typeof (err as { status?: number; statusCode?: number }).statusCode === "number"
+      ? (err as { statusCode: number }).statusCode
       : typeof (err as { status?: number }).status === "number"
-      ? (err as { status: number }).status!
+      ? (err as { status: number }).status
       : 500;
 
-  const code = err instanceof CustomError ? err.code : "INTERNAL_ERROR";
+  const code = err instanceof AppError ? err.code : "INTERNAL_ERROR";
   const message = err.message || "An unexpected error occurred";
-  const details = err instanceof CustomError ? err.details : undefined;
+  const details = err instanceof AppError ? err.details : undefined;
 
   const response: ApiResponse = {
     success: false,
