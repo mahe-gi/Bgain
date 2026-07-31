@@ -83,3 +83,28 @@ export type UploadBodyInput = z.infer<typeof uploadBodySchema>;
 export const fileIdParamSchema = z.object({
   id: z.string().uuid("Invalid file ID format")
 });
+
+export const updateFileSchema = z
+  .object({
+    name: z
+      .string()
+      .transform((val) => val.trim())
+      .refine((val) => val.length >= 1 && val.length <= 255, {
+        message: "Filename length must be between 1 and 255 characters"
+      })
+      .optional(),
+    folderId: z
+      .string()
+      .uuid("folderId must be a valid UUID")
+      .nullable()
+      .optional()
+  })
+  .strict()
+  .refine(
+    (data) => data.name !== undefined || data.folderId !== undefined,
+    {
+      message: "At least one permitted field ('name' or 'folderId') must be provided"
+    }
+  );
+
+export type UpdateFileInput = z.infer<typeof updateFileSchema>;

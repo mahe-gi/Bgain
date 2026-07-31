@@ -5,11 +5,13 @@ import { requireAdmin } from "../middleware/admin.middleware.js";
 import { handleFileUpload } from "../middleware/upload.middleware.js";
 import {
   validateQuery,
-  validateParams
+  validateParams,
+  validateBody
 } from "../middleware/validate.middleware.js";
 import {
   fileQuerySchema,
-  fileIdParamSchema
+  fileIdParamSchema,
+  updateFileSchema
 } from "../schemas/file.schema.js";
 
 export const fileRouter = Router();
@@ -38,6 +40,25 @@ fileRouter.get(
   authenticate,
   validateParams(fileIdParamSchema),
   FileController.getFileById
+);
+
+// Rename/move file (Admin only)
+fileRouter.patch(
+  "/:id",
+  authenticate,
+  requireAdmin,
+  validateParams(fileIdParamSchema),
+  validateBody(updateFileSchema),
+  FileController.updateFile
+);
+
+// Delete file (Admin only)
+fileRouter.delete(
+  "/:id",
+  authenticate,
+  requireAdmin,
+  validateParams(fileIdParamSchema),
+  FileController.deleteFile
 );
 
 // Get short-lived preview URL (Admin and Viewer)

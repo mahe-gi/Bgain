@@ -2,11 +2,13 @@ import {
   HeadBucketCommand,
   PutObjectCommand,
   DeleteObjectCommand,
+  DeleteObjectsCommand,
   GetObjectCommand
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { s3Client } from "../lib/storage.js";
 import { env } from "../config/env.js";
+import { AppError } from "../utils/app-error.js";
 
 export class StorageService {
   static async checkBucketAccess(): Promise<void> {
@@ -34,6 +36,31 @@ export class StorageService {
       Key: storageKey
     });
     await s3Client.send(command);
+  }
+
+  static async deleteObjects(storageKeys: string[]): Promise<void> {
+    if (!storageKeys || storageKeys.length === 0) {
+      return;
+    }
+
+    const uniqueKeys = Array.from(new Set(storageKeys));
+    const CHUNK_SIZE = 1000;
+
+    for (let i = 0; i < uniqueKeys.length; i += CHUNK_SIZE) {
+      const chunk = uniqueKeys.slice(i, i + CHUNK_SIZE);
+      const command = new DeleteObjectsCommand({
+        Bucket: env.STORAGE_BUCKET,
+        Delete: {
+          Objects: chunk.map((key) => ({ Key: key })),
+          Quiet: false
+        }
+      });
+
+      const response = await s3Client.send(command);
+      if (response.Errors && response.Errors.length > 0) {
+        throw new AppError(502, "STORAGE_ERROR", "Failed to delete storage objects");
+      }
+    }
   }
 
   static async getPreviewUrl(

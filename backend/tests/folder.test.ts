@@ -366,7 +366,7 @@ describe("Folder Management Tests (Phase 5)", { timeout: 30000 }, () => {
     createdTopFolderIds.push(targetId);
 
     const conflictName = `ConflictName-${crypto.randomUUID()}`;
-    const conflictRes = await request(app)
+    await request(app)
       .post("/api/folders")
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ name: conflictName, parentId: targetId });

@@ -1,6 +1,7 @@
 import { Prisma } from "../generated/prisma/index.js";
 import { prisma } from "../lib/prisma.js";
 import { AppError } from "../utils/app-error.js";
+import { StorageService } from "./storage.service.js";
 import {
   FolderQueryInput,
   CreateFolderInput,
@@ -200,14 +201,22 @@ export class FolderService {
       }
     }
 
-    const fileCount = await prisma.file.count({
-      where: { folderId: { in: allFolderIds } }
+    const filesInTree = await prisma.file.findMany({
+      where: { folderId: { in: allFolderIds } },
+      select: { storageKey: true }
     });
 
-    if (fileCount > 0) {
-      throw new AppError(409, "FOLDER_CONTAINS_FILES", "Folder file cleanup is not available yet");
+    const storageKeys = filesInTree.map((f) => f.storageKey);
+
+    // Delete all R2 objects for files in the subtree first
+    try {
+      await StorageService.deleteObjects(storageKeys);
+    } catch (err) {
+      if (err instanceof AppError) throw err;
+      throw new AppError(502, "STORAGE_ERROR", "Failed to delete storage objects");
     }
 
+    // Cascade delete target folder and descendant folders/files in DB only after R2 deletion succeeds
     await prisma.folder.delete({
       where: { id: folderId }
     });

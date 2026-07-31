@@ -76,6 +76,38 @@ export class FileController {
     }
   }
 
+  static async updateFile(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const fileId = req.params.id as string;
+      const file = await FileService.updateFile(fileId, req.body);
+      const response: ApiResponse<{ file: SafeFile }> = {
+        success: true,
+        data: { file }
+      };
+      res.status(200).json(response);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async deleteFile(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const fileId = req.params.id as string;
+      await FileService.deleteFile(fileId);
+      res.status(204).end();
+    } catch (err) {
+      next(err);
+    }
+  }
+
   static async getPreviewUrl(
     req: Request,
     res: Response,

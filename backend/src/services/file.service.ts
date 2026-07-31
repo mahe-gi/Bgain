@@ -6,6 +6,7 @@ import { StorageService } from "./storage.service.js";
 import {
   FileQueryInput,
   UploadBodyInput,
+  UpdateFileInput,
   validateFilenameAndMime,
   PREVIEWABLE_MIME_TYPES
 } from "../schemas/file.schema.js";
@@ -152,6 +153,100 @@ export class FileService {
     }
 
     return toSafeFile(file);
+  }
+
+  static async updateFile(
+    fileId: string,
+    input: UpdateFileInput
+  ): Promise<SafeFile> {
+    const file = await prisma.file.findUnique({
+      where: { id: fileId }
+    });
+
+    if (!file) {
+      throw new AppError(404, "FILE_NOT_FOUND", "File not found");
+    }
+
+    let finalName = file.name;
+    if (input.name !== undefined) {
+      try {
+        const validated = validateFilenameAndMime(input.name, file.mimeType);
+        finalName = validated.safeName;
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Filename validation failed";
+        throw new AppError(415, "FILE_TYPE_NOT_ALLOWED", message);
+      }
+    }
+
+    let finalFolderId = file.folderId;
+    if (input.folderId !== undefined) {
+      finalFolderId = input.folderId;
+      if (finalFolderId !== null) {
+        const folderExists = await prisma.folder.findUnique({
+          where: { id: finalFolderId }
+        });
+        if (!folderExists) {
+          throw new AppError(404, "FOLDER_NOT_FOUND", "Target folder not found");
+        }
+      }
+    }
+
+    if (finalName !== file.name || finalFolderId !== file.folderId) {
+      const existing = await prisma.file.findFirst({
+        where: {
+          folderId: finalFolderId,
+          name: finalName,
+          id: { not: fileId }
+        }
+      });
+
+      if (existing) {
+        throw new AppError(409, "FILE_NAME_CONFLICT", "A file with this name already exists in this location");
+      }
+    }
+
+    try {
+      const updatedFile = await prisma.file.update({
+        where: { id: fileId },
+        data: {
+          name: finalName,
+          folderId: finalFolderId
+        }
+      });
+
+      return toSafeFile(updatedFile);
+    } catch (err) {
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === "P2002"
+      ) {
+        throw new AppError(409, "FILE_NAME_CONFLICT", "A file with this name already exists in this location");
+      }
+      throw err;
+    }
+  }
+
+  static async deleteFile(fileId: string): Promise<void> {
+    const file = await prisma.file.findUnique({
+      where: { id: fileId }
+    });
+
+    if (!file) {
+      throw new AppError(404, "FILE_NOT_FOUND", "File not found");
+    }
+
+    // 1. Delete R2 object first
+    try {
+      await StorageService.deleteObject(file.storageKey);
+    } catch (err) {
+      if (err instanceof AppError) throw err;
+      throw new AppError(502, "STORAGE_ERROR", "Failed to delete storage object");
+    }
+
+    // 2. Delete database metadata only after R2 deletion succeeds
+    await prisma.file.delete({
+      where: { id: fileId }
+    });
   }
 
   static async getPreviewUrl(
