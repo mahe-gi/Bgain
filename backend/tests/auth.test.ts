@@ -6,7 +6,6 @@ import rateLimit from "express-rate-limit";
 import { app } from "../src/app.js";
 import { env } from "../src/config/env.js";
 import { requireAdmin } from "../src/middleware/admin.middleware.js";
-import { loginRateLimiter } from "../src/middleware/rate-limit.middleware.js";
 import { Request, Response, NextFunction } from "express";
 
 dotenv.config();
