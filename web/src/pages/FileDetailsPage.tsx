@@ -34,10 +34,13 @@ function getFileIcon(mimeType: string) {
 function isSupportedPreview(mimeType: string): boolean {
   if (!mimeType) return false;
   const mime = mimeType.toLowerCase();
-  if (mime.startsWith("image/")) return true;
-  if (mime === "application/pdf") return true;
-  if (mime === "text/plain" || mime.startsWith("text/")) return true;
-  return false;
+  return (
+    mime === "image/jpeg" ||
+    mime === "image/jpg" ||
+    mime === "image/png" ||
+    mime === "application/pdf" ||
+    mime === "text/plain"
+  );
 }
 
 export const FileDetailsPage: React.FC = () => {
@@ -325,15 +328,17 @@ export const FileDetailsPage: React.FC = () => {
           </div>
         ) : (
           <div className={styles.previewContainer} data-testid="preview-content">
-            {file.mimeType.startsWith("image/") && (
+            {(file.mimeType.toLowerCase() === "image/jpeg" ||
+              file.mimeType.toLowerCase() === "image/jpg" ||
+              file.mimeType.toLowerCase() === "image/png") && (
               <img src={previewUrl!} alt={file.name} className={styles.previewImage} />
             )}
 
-            {file.mimeType === "application/pdf" && (
+            {file.mimeType.toLowerCase() === "application/pdf" && (
               <iframe src={previewUrl!} title={file.name} className={styles.previewIframe} />
             )}
 
-            {file.mimeType.startsWith("text/") && (
+            {file.mimeType.toLowerCase() === "text/plain" && (
               <pre className={styles.previewTxt}>{txtContent ?? "Loading plain text content…"}</pre>
             )}
           </div>
