@@ -20,6 +20,7 @@
   box-shadow: var(--shadow-lg);
   width: 100%;
   max-width: 480px;
+  max-height: calc(100vh - 32px);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -43,6 +44,7 @@
   justify-content: space-between;
   padding: var(--space-4) var(--space-6);
   border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
 }
 
 .title {
@@ -80,6 +82,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+  overflow-y: auto;
 }
 
 .footer {
@@ -90,4 +93,5 @@
   padding: var(--space-4) var(--space-6);
   border-top: 1px solid var(--color-border);
   background-color: var(--color-bg-input);
+  flex-shrink: 0;
 }
