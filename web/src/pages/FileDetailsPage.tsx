@@ -13,7 +13,8 @@ import {
   Info,
   Edit2,
   FolderInput,
-  Trash2
+  Trash2,
+  FolderOpen
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth.js";
 import { getFileDetailsApi, getPreviewUrlApi, getDownloadUrlApi } from "../api/file.api.js";
@@ -133,6 +134,17 @@ export const FileDetailsPage: React.FC = () => {
     }
   };
 
+  const handleOpenContainingFolder = () => {
+    if (!file) return;
+    if (file.folderId === null) {
+      navigate("/storage");
+    } else {
+      navigate("/storage", {
+        state: { initialFolder: { id: file.folderId, name: "Folder" } }
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className={styles.container} data-testid="file-details-loading">
@@ -206,19 +218,6 @@ export const FileDetailsPage: React.FC = () => {
           </div>
 
           <div className={styles.actionButtons}>
-            {supported && (
-              <button
-                type="button"
-                onClick={handleRequestPreview}
-                disabled={previewLoading}
-                className={styles.secondaryButton}
-                aria-label="Preview file content"
-              >
-                <Eye size={16} aria-hidden="true" />
-                <span>{previewLoading ? "Loading Preview…" : "Preview"}</span>
-              </button>
-            )}
-
             <button
               type="button"
               onClick={handleDownload}
@@ -256,8 +255,7 @@ export const FileDetailsPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsDeleteOpen(true)}
-                  className={styles.secondaryButton}
-                  style={{ color: "var(--color-danger)", borderColor: "var(--color-danger-border)" }}
+                  className={styles.dangerButton}
                   aria-label="Delete file"
                 >
                   <Trash2 size={16} aria-hidden="true" />
@@ -292,14 +290,25 @@ export const FileDetailsPage: React.FC = () => {
 
           <div className={styles.metaItem}>
             <span className={styles.metaLabel}>Location</span>
-            <span className={styles.metaValue}>
-              {file.folderId === null ? "Root Storage" : `Folder (${file.folderId.slice(0, 8)}…)`}
-            </span>
+            <div className={styles.locationContainer}>
+              <span className={styles.metaValue}>
+                {file.folderId === null ? "Root Storage" : "Nested Folder"}
+              </span>
+              <button
+                type="button"
+                onClick={handleOpenContainingFolder}
+                className={styles.locationLinkBtn}
+                aria-label="Open containing folder"
+              >
+                <FolderOpen size={14} aria-hidden="true" />
+                <span>Open containing folder</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Preview Display Section */}
+      {/* Preview Section */}
       <section className={styles.previewSection} aria-label="File Preview">
         <h2 className={styles.sectionTitle}>File Preview</h2>
 
@@ -314,7 +323,17 @@ export const FileDetailsPage: React.FC = () => {
         ) : !previewUrl && !previewError ? (
           <div className={styles.noticeBox} data-testid="preview-prompt">
             <Eye size={36} aria-hidden="true" />
-            <p>Click the <strong>Preview</strong> button above to load a private signed preview of this file.</p>
+            <p>Click below to generate a private signed preview of this file.</p>
+            <button
+              type="button"
+              onClick={handleRequestPreview}
+              disabled={previewLoading}
+              className={styles.previewActionBtn}
+              aria-label="Preview file content"
+            >
+              <Eye size={16} aria-hidden="true" />
+              <span>{previewLoading ? "Loading Preview…" : "Load Preview"}</span>
+            </button>
           </div>
         ) : previewError ? (
           <div className={styles.errorBanner} role="alert" data-testid="preview-error">

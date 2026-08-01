@@ -112,7 +112,8 @@ describe("Storage Browser Page (Web Phase 2)", () => {
       expect(screen.getByText("Financial Reports")).toBeInTheDocument();
       expect(screen.getByText("Design Assets")).toBeInTheDocument();
       expect(screen.getAllByText("Company-Overview.pdf").length).toBeGreaterThan(0);
-      expect(screen.getByText("2 folders, 1 file")).toBeInTheDocument();
+      expect(screen.getByText("Folders (2)")).toBeInTheDocument();
+      expect(screen.getByText("Files (1)")).toBeInTheDocument();
     });
   });
 
@@ -140,7 +141,8 @@ describe("Storage Browser Page (Web Phase 2)", () => {
       expect(screen.getByText("2026 Q1")).toBeInTheDocument();
       expect(screen.getAllByText("Q1-Invoice.xlsx").length).toBeGreaterThan(0);
       expect(screen.getAllByText("Excel Spreadsheet (.xlsx)").length).toBeGreaterThan(0);
-      expect(screen.getByText("1 folder, 1 file")).toBeInTheDocument();
+      expect(screen.getByText("Folders (1)")).toBeInTheDocument();
+      expect(screen.getByText("Files (1)")).toBeInTheDocument();
     });
   });
 
@@ -237,7 +239,7 @@ describe("Storage Browser Page (Web Phase 2)", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Financial Reports")).toBeInTheDocument();
-      expect(screen.getByText("2 folders, 0 files")).toBeInTheDocument();
+      expect(screen.getByText("Folders (2)")).toBeInTheDocument();
       expect(screen.queryByTestId("storage-empty")).not.toBeInTheDocument();
     });
   });

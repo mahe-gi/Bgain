@@ -20,12 +20,13 @@ export const MobileNavigation: React.FC = () => {
         <li className={styles.navItem}>
           <NavLink
             to="/dashboard"
+            aria-label="Dashboard"
             className={({ isActive }) =>
               `${styles.navLink} ${isActive ? styles.active : ""}`
             }
           >
-            <LayoutDashboard size={20} />
-            <span>Dashboard</span>
+            <LayoutDashboard size={20} aria-hidden="true" />
+            <span>Home</span>
           </NavLink>
         </li>
 
@@ -36,7 +37,7 @@ export const MobileNavigation: React.FC = () => {
               `${styles.navLink} ${isActive ? styles.active : ""}`
             }
           >
-            <Folder size={20} />
+            <Folder size={20} aria-hidden="true" />
             <span>Storage</span>
           </NavLink>
         </li>
@@ -48,7 +49,7 @@ export const MobileNavigation: React.FC = () => {
               `${styles.navLink} ${isActive ? styles.active : ""}`
             }
           >
-            <Search size={20} />
+            <Search size={20} aria-hidden="true" />
             <span>Search</span>
           </NavLink>
         </li>
@@ -61,7 +62,7 @@ export const MobileNavigation: React.FC = () => {
                 `${styles.navLink} ${isActive ? styles.active : ""}`
               }
             >
-              <Users size={20} />
+              <Users size={20} aria-hidden="true" />
               <span>Users</span>
             </NavLink>
           </li>
@@ -74,7 +75,7 @@ export const MobileNavigation: React.FC = () => {
               `${styles.navLink} ${isActive ? styles.active : ""}`
             }
           >
-            <User size={20} />
+            <User size={20} aria-hidden="true" />
             <span>Profile</span>
           </NavLink>
         </li>

@@ -69,6 +69,12 @@ export const SearchPage: React.FC = () => {
 
   return (
     <div className={styles.container}>
+      {/* Page Header */}
+      <div className={styles.pageHeader}>
+        <h1 className={styles.pageTitle}>Search</h1>
+        <p className={styles.pageSubtitle} data-testid="search-prompt">Search across all folders and files in the storage system.</p>
+      </div>
+
       {/* Search Form Card */}
       <div className={styles.searchCard}>
         <form onSubmit={handleSubmit} className={styles.searchForm}>
@@ -87,8 +93,8 @@ export const SearchPage: React.FC = () => {
               placeholder="Enter folder or file name…"
               className={styles.searchInput}
             />
-            <button type="submit" className={styles.submitButton}>
-              <SearchIcon size={18} aria-hidden="true" />
+            <button type="submit" className={styles.submitButton} aria-label="Search">
+              <SearchIcon size={16} aria-hidden="true" />
               <span>Search</span>
             </button>
           </div>
@@ -107,8 +113,9 @@ export const SearchPage: React.FC = () => {
 
       {/* Loading State */}
       {isLoading && (
-        <div className={styles.section} data-testid="search-loading">
-          <div className={styles.searchCard} style={{ opacity: 0.6 }}>Searching storage system…</div>
+        <div className={styles.inlineLoading} role="status" aria-live="polite" data-testid="search-loading">
+          <div className="spinner" style={{ width: "20px", height: "20px" }} />
+          <span>Searching storage system…</span>
         </div>
       )}
 
@@ -125,21 +132,12 @@ export const SearchPage: React.FC = () => {
         </div>
       )}
 
-      {/* Prompt / Empty State */}
-      {!queryFromUrl && (
-        <div className={styles.emptyState} data-testid="search-prompt">
-          <SearchIcon size={48} aria-hidden="true" />
-          <h3>Global Storage Search</h3>
-          <p>Enter a keyword above to find matching folders and files across the system.</p>
-        </div>
-      )}
-
       {/* Results Rendering */}
       {isValidQuery && !isLoading && !isError && (
         <>
           {total === 0 ? (
             <div className={styles.emptyState} data-testid="search-empty">
-              <SearchIcon size={48} aria-hidden="true" />
+              <SearchIcon size={36} aria-hidden="true" />
               <h3>No results found</h3>
               <p>No files or folders match &quot;{trimmedQuery}&quot;.</p>
             </div>
@@ -157,12 +155,10 @@ export const SearchPage: React.FC = () => {
                         onClick={() => handleOpenFolderResult(folder)}
                         className={styles.folderCard}
                       >
-                        <FolderIcon size={24} style={{ color: "var(--color-primary)", flexShrink: 0 }} aria-hidden="true" />
-                        <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+                        <FolderIcon size={20} style={{ color: "var(--color-primary)", flexShrink: 0 }} aria-hidden="true" />
+                        <div className={styles.folderMeta}>
                           <span className={styles.fileName}>{folder.name}</span>
-                          <span className={styles.fileMeta}>
-                            Updated {formatDate(folder.updatedAt || folder.createdAt)}
-                          </span>
+                          <span className={styles.fileMeta}>Created {formatDate(folder.createdAt)}</span>
                         </div>
                       </button>
                     ))}
@@ -185,9 +181,9 @@ export const SearchPage: React.FC = () => {
                           </div>
                         </div>
 
-                        <div className={styles.fileRight}>
+                        <div className={styles.fileSizeDate}>
                           <span>{formatBytes(file.sizeBytes)}</span>
-                          <span>{formatDate(file.updatedAt || file.createdAt)}</span>
+                          <span>{formatDate(file.createdAt)}</span>
                         </div>
                       </Link>
                     ))}

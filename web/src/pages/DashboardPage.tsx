@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useContext } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Folder, FileText, HardDrive, File, Image, FileCode, AlertCircle } from "lucide-react";
+import { Folder, FileText, HardDrive, File, Image, FileCode, AlertCircle, ArrowUpRight } from "lucide-react";
+import { AuthContext } from "../context/auth-context.js";
 import { getDashboardApi } from "../api/dashboard.api.js";
 import { getErrorMessage } from "../api/client.js";
 import { formatBytes, formatDate, getFileTypeLabel } from "../utils/formatters.js";
@@ -15,6 +16,8 @@ function getFileIcon(mimeType: string) {
 }
 
 export const DashboardPage: React.FC = () => {
+  const authContext = useContext(AuthContext);
+  const user = authContext?.user;
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["dashboard"],
     queryFn: getDashboardApi
@@ -24,11 +27,11 @@ export const DashboardPage: React.FC = () => {
     return (
       <div className={styles.dashboard} data-testid="dashboard-loading">
         <div className={styles.statsGrid}>
-          <div className={`${styles.statCard} ${styles.skeleton}`} style={{ height: "90px" }} />
-          <div className={`${styles.statCard} ${styles.skeleton}`} style={{ height: "90px" }} />
-          <div className={`${styles.statCard} ${styles.skeleton}`} style={{ height: "90px" }} />
+          <div className={`${styles.statCard} ${styles.skeleton}`} style={{ height: "110px" }} />
+          <div className={`${styles.statCard} ${styles.skeleton}`} style={{ height: "110px" }} />
+          <div className={`${styles.statCard} ${styles.skeleton}`} style={{ height: "110px" }} />
         </div>
-        <div className={`${styles.section} ${styles.skeleton}`} style={{ height: "240px" }} />
+        <div className={`${styles.section} ${styles.skeleton}`} style={{ height: "260px" }} />
       </div>
     );
   }
@@ -50,14 +53,31 @@ export const DashboardPage: React.FC = () => {
   }
 
   const { folderCount = 0, fileCount = 0, totalSizeBytes = 0, recentFiles = [] } = data || {};
+  const userGreeting = user?.name ? `Welcome back, ${user.name}` : "System Overview";
 
   return (
     <div className={styles.dashboard}>
-      {/* Three Statistic Cards (No totalUsers) */}
+      {/* Page Header Greeting */}
+      <div className={styles.pageHeader}>
+        <h1 className={styles.pageTitle}>{userGreeting}</h1>
+        <p className={styles.pageSubtitle}>Your storage overview and recent files.</p>
+      </div>
+
+      {/* Storage Metrics Grid */}
       <section className={styles.statsGrid} aria-label="Storage Statistics">
+        <div className={`${styles.statCard} ${styles.primaryStatCard}`}>
+          <div className={styles.primaryStatHeader}>
+            <div className={styles.statIconContainerPrimary}>
+              <HardDrive size={22} aria-hidden="true" />
+            </div>
+            <span className={styles.statLabelPrimary}>Storage Used</span>
+          </div>
+          <div className={styles.statValuePrimary}>{formatBytes(totalSizeBytes)}</div>
+        </div>
+
         <div className={styles.statCard}>
           <div className={styles.statIconContainer}>
-            <Folder size={24} aria-hidden="true" />
+            <Folder size={20} aria-hidden="true" />
           </div>
           <div className={styles.statContent}>
             <span className={styles.statLabel}>Total Folders</span>
@@ -67,28 +87,24 @@ export const DashboardPage: React.FC = () => {
 
         <div className={styles.statCard}>
           <div className={styles.statIconContainer}>
-            <FileText size={24} aria-hidden="true" />
+            <FileText size={20} aria-hidden="true" />
           </div>
           <div className={styles.statContent}>
             <span className={styles.statLabel}>Total Files</span>
             <span className={styles.statValue}>{fileCount}</span>
           </div>
         </div>
-
-        <div className={styles.statCard}>
-          <div className={styles.statIconContainer}>
-            <HardDrive size={24} aria-hidden="true" />
-          </div>
-          <div className={styles.statContent}>
-            <span className={styles.statLabel}>Storage Used</span>
-            <span className={styles.statValue}>{formatBytes(totalSizeBytes)}</span>
-          </div>
-        </div>
       </section>
 
-      {/* Recent Files Section */}
+      {/* Main Content Area: Recent Files */}
       <section className={styles.section} aria-label="Recent Files">
-        <h2 className={styles.sectionTitle}>Recent Files</h2>
+        <div className={styles.sectionTitleRow}>
+          <h2 className={styles.sectionTitle}>Recent Files</h2>
+          <Link to="/storage" className={styles.viewStorageLink}>
+            <span>Browse Storage</span>
+            <ArrowUpRight size={14} aria-hidden="true" />
+          </Link>
+        </div>
 
         {recentFiles.length === 0 ? (
           <div className={styles.emptyState}>

@@ -407,4 +407,30 @@ describe("Web Phase 4: Admin Storage Actions", () => {
       expect(deleteFileSpy).toHaveBeenCalledWith("file-uuid-1");
     });
   });
+
+  it("9. UploadFileDialog displays styled Choose File button and shows selected filename", async () => {
+    vi.mocked(storageApi.getFoldersApi).mockResolvedValue(mockFolders);
+    vi.mocked(storageApi.getFilesApi).mockResolvedValue(mockFiles);
+
+    renderWithAuthRole(mockAdminUser, ["/storage"]);
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /upload file/i })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /upload file/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText("No file selected")).toBeInTheDocument();
+      expect(screen.getByText("Choose File")).toBeInTheDocument();
+    });
+
+    const fileInput = screen.getByLabelText(/select file/i);
+    const testFile = new File(["test data"], "sample-doc.pdf", { type: "application/pdf" });
+    fireEvent.change(fileInput, { target: { files: [testFile] } });
+
+    await waitFor(() => {
+      expect(screen.getByText(/sample-doc\.pdf/i)).toBeInTheDocument();
+    });
+  });
 });

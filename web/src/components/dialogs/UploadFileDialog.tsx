@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Upload } from "lucide-react";
 import { Modal } from "./Modal.js";
 import { uploadFileApi } from "../../api/file.api.js";
 import { getErrorMessage } from "../../api/client.js";
 import { formatBytes } from "../../utils/formatters.js";
+import styles from "./UploadFileDialog.module.css";
 
 export interface UploadFileDialogProps {
   isOpen: boolean;
@@ -113,12 +114,12 @@ export const UploadFileDialog: React.FC<UploadFileDialogProps> = ({
             disabled={mutation.isPending || !selectedFile}
             className="primary-btn"
           >
-            {mutation.isPending ? `Uploading (${progress}%)…` : "Upload File"}
+            {mutation.isPending ? "Uploading…" : "Upload File"}
           </button>
         </>
       }
     >
-      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
         {errorMsg && (
           <div role="alert" className="error-banner">
             <AlertCircle size={16} aria-hidden="true" />
@@ -126,53 +127,56 @@ export const UploadFileDialog: React.FC<UploadFileDialogProps> = ({
           </div>
         )}
 
-        <span style={{ fontSize: "12px", color: "var(--color-text-muted)" }}>
+        <span className={styles.allowedText}>
           Allowed types: PDF, JPG, PNG, TXT, DOCX, XLSX (Max size: 10 MB).
         </span>
 
-        <label htmlFor="upload-file-input" style={{ fontSize: "14px", fontWeight: 600 }}>
-          Select File
-        </label>
-        <input
-          id="upload-file-input"
-          type="file"
-          accept=".pdf,.jpg,.jpeg,.png,.txt,.docx,.xlsx"
-          onChange={handleFileChange}
-          disabled={mutation.isPending}
-          className="dialog-input"
-        />
-
-        {selectedFile && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginTop: "8px" }}>
-            <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--color-text-primary)" }}>
-              {selectedFile.name} ({formatBytes(selectedFile.size)})
+        <div className={styles.filePickerContainer}>
+          <input
+            id="upload-file-input"
+            type="file"
+            accept=".pdf,.jpg,.jpeg,.png,.txt,.docx,.xlsx"
+            onChange={handleFileChange}
+            disabled={mutation.isPending}
+            className={styles.hiddenFileInput}
+            aria-label="Select File"
+          />
+          <div className={styles.pickerControls}>
+            <label
+              htmlFor="upload-file-input"
+              className={`${styles.chooseFileBtn} ${
+                mutation.isPending ? styles.disabledChooseBtn : ""
+              }`}
+            >
+              <Upload size={14} aria-hidden="true" />
+              <span>Choose File</span>
+            </label>
+            <span
+              className={`${styles.selectedFileName} ${
+                selectedFile ? styles.selectedFileNameActive : ""
+              }`}
+              title={selectedFile ? `${selectedFile.name} (${formatBytes(selectedFile.size)})` : undefined}
+            >
+              {selectedFile
+                ? `${selectedFile.name} (${formatBytes(selectedFile.size)})`
+                : "No file selected"}
             </span>
           </div>
-        )}
+        </div>
 
         {mutation.isPending && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginTop: "8px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "4px" }}>
             <div
-              style={{
-                width: "100%",
-                height: "8px",
-                backgroundColor: "var(--color-bg-input)",
-                borderRadius: "4px",
-                overflow: "hidden"
-              }}
+              className={styles.progressBarTrack}
+              role="progressbar"
+              aria-valuenow={progress}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label="Upload progress"
             >
-              <div
-                style={{
-                  width: `${progress}%`,
-                  height: "100%",
-                  backgroundColor: "var(--color-primary)",
-                  transition: "width 0.2s ease"
-                }}
-              />
+              <div className={styles.progressBarFill} style={{ width: `${progress}%` }} />
             </div>
-            <span style={{ fontSize: "12px", textAlign: "right", color: "var(--color-text-muted)" }}>
-              {progress}% uploaded
-            </span>
+            <span className={styles.progressLabel}>Uploading file… {progress}%</span>
           </div>
         )}
       </form>

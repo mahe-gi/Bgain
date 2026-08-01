@@ -17,7 +17,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  padding: var(--space-2) var(--space-3);
+  padding: 8px 14px;
   background-color: var(--color-bg-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -30,6 +30,7 @@
 .backButton:hover {
   color: var(--color-text-primary);
   background-color: var(--color-bg-surface-hover);
+  border-color: var(--color-border-strong);
 }
 
 .detailsCard {
@@ -64,8 +65,9 @@
   justify-content: center;
   width: 52px;
   height: 52px;
-  background-color: rgba(37, 99, 235, 0.12);
+  background-color: rgba(215, 154, 121, 0.1);
   color: var(--color-primary);
+  border: 1px solid rgba(215, 154, 121, 0.2);
   border-radius: var(--radius-md);
   flex-shrink: 0;
 }
@@ -80,6 +82,7 @@
   font-size: var(--font-size-xl);
   font-weight: 700;
   color: var(--color-text-primary);
+  letter-spacing: -0.01em;
   word-break: break-all;
 }
 
@@ -103,29 +106,32 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  padding: var(--space-3) var(--space-5);
+  padding: 10px 18px;
   background-color: var(--color-primary);
-  color: #ffffff;
+  color: var(--color-primary-text);
   border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
-  font-weight: 600;
-  transition: opacity 0.15s ease;
+  font-weight: 700;
+  border: 1px solid var(--color-primary);
+  transition: all 0.15s ease;
 }
 
 .primaryButton:hover:not(:disabled) {
-  opacity: 0.9;
+  background-color: var(--color-primary-hover);
+  transform: translateY(-1px);
 }
 
 .primaryButton:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  color: var(--color-text-muted);
 }
 
 .secondaryButton {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  padding: var(--space-3) var(--space-5);
+  padding: 10px 18px;
   background-color: var(--color-bg-input);
   border: 1px solid var(--color-border);
   color: var(--color-text-primary);
@@ -137,11 +143,30 @@
 
 .secondaryButton:hover:not(:disabled) {
   background-color: var(--color-bg-surface-hover);
+  border-color: var(--color-border-strong);
 }
 
 .secondaryButton:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.dangerButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 10px 18px;
+  background-color: var(--color-danger-bg);
+  border: 1px solid var(--color-danger-border);
+  color: var(--color-danger);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+.dangerButton:hover:not(:disabled) {
+  background-color: rgba(229, 83, 83, 0.2);
 }
 
 .metadataGrid {
@@ -162,13 +187,39 @@
   font-size: var(--font-size-xs);
   font-weight: 600;
   text-transform: uppercase;
-  color: var(--color-text-muted);;
+  color: var(--color-text-muted);
+  letter-spacing: 0.05em;
 }
 
 .metaValue {
   font-size: var(--font-size-sm);
   color: var(--color-text-primary);
   font-weight: 500;
+}
+
+.locationContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.locationLinkBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  transition: opacity 0.15s ease;
+}
+
+.locationLinkBtn:hover {
+  text-decoration: underline;
+  opacity: 0.85;
 }
 
 .previewSection {
@@ -186,6 +237,28 @@
   font-size: var(--font-size-lg);
   font-weight: 700;
   color: var(--color-text-primary);
+  letter-spacing: -0.01em;
+}
+
+.previewActionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 10px 18px;
+  background-color: var(--color-primary);
+  color: var(--color-primary-text);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  border: 1px solid var(--color-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-top: var(--space-2);
+}
+
+.previewActionBtn:hover:not(:disabled) {
+  background-color: var(--color-primary-hover);
+  transform: translateY(-1px);
 }
 
 .previewContainer {

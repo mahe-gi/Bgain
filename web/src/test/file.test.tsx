@@ -247,4 +247,16 @@ describe("File Details Page (Web Phase 3)", () => {
       expect(screen.getByText("Download failed")).toBeInTheDocument();
     });
   });
+
+  it("10. File Preview action exists inside preview panel and raw folder UUID is not rendered", async () => {
+    vi.mocked(fileApi.getFileDetailsApi).mockResolvedValue(mockFilePdf);
+
+    renderFileDetails("file-uuid-pdf");
+
+    await waitFor(() => {
+      expect(screen.getByTestId("preview-prompt")).toBeInTheDocument();
+      expect(screen.queryByText(/folder-uuid-1/i)).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /open containing folder/i })).toBeInTheDocument();
+    });
+  });
 });

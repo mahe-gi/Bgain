@@ -154,4 +154,15 @@ describe("Dashboard Page (Web Phase 2)", () => {
       expect(screen.getByText("No recent files uploaded yet.")).toBeInTheDocument();
     });
   });
+
+  it("7. Does not render progress bar when no quota denominator exists", async () => {
+    vi.mocked(dashboardApi.getDashboardApi).mockResolvedValue(mockDashboardData);
+
+    renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByText("Storage Used")).toBeInTheDocument();
+      expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+    });
+  });
 });

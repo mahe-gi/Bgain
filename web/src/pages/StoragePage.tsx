@@ -16,7 +16,8 @@ import {
   Edit2,
   FolderInput,
   Trash2,
-  CheckCircle
+  CheckCircle,
+  Lock
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth.js";
 import { getFoldersApi, getFilesApi } from "../api/storage.api.js";
@@ -71,7 +72,7 @@ export const StoragePage: React.FC = () => {
     return [{ id: "root", name: "Storage" }];
   });
 
-  // Clear consumed navigation state using React Router navigate
+  // Clear consumed navigation state
   useEffect(() => {
     if (locationState?.initialFolder) {
       navigate(location.pathname, { replace: true, state: null });
@@ -91,7 +92,7 @@ export const StoragePage: React.FC = () => {
   const currentFolder = breadcrumbs[breadcrumbs.length - 1];
   const { sortBy, order } = parseSortOption(sortOption);
 
-  // Separate TanStack Query queries for Folders and Files
+  // TanStack Query for Folders and Files
   const foldersQuery = useQuery({
     queryKey: ["folders", currentFolder.id, sortBy, order],
     queryFn: () => getFoldersApi({ parentId: currentFolder.id, sortBy, order })
@@ -124,63 +125,49 @@ export const StoragePage: React.FC = () => {
 
   const folders = foldersQuery.data || [];
   const files = filesQuery.data || [];
+  const isRoot = breadcrumbs.length === 1;
 
   return (
     <div className={styles.container}>
-      {/* Top Controls Bar: Breadcrumbs, Sorting, Admin Actions & Refresh */}
-      <div className={styles.controlsBar}>
-        <nav aria-label="Folder Breadcrumb Navigation" className={styles.breadcrumbNav}>
-          <ol className={styles.breadcrumbList}>
-            {breadcrumbs.map((item, idx) => {
-              const isLast = idx === breadcrumbs.length - 1;
-              return (
-                <li key={item.id} className={styles.breadcrumbItem}>
-                  {isLast ? (
-                    <span className={styles.breadcrumbCurrent} aria-current="page">
-                      {item.name}
-                    </span>
-                  ) : (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => handleNavigateBreadcrumb(idx)}
-                        className={styles.breadcrumbButton}
-                      >
-                        {item.name}
-                      </button>
-                      <ChevronRight size={14} className={styles.separator} aria-hidden="true" />
-                    </>
-                  )}
-                </li>
-              );
-            })}
-          </ol>
-        </nav>
+      {/* Page Header */}
+      <div className={styles.pageHeader}>
+        <div className={styles.headerTitleGroup}>
+          <h1 className={styles.pageTitle}>Storage</h1>
+          <p className={styles.pageSubtitle}>
+            {isRoot
+              ? "All files and folders in root storage"
+              : `Folder: ${currentFolder.name}`}
+          </p>
+        </div>
 
         <div className={styles.actionsGroup}>
-          {/* Admin Storage Action Buttons */}
-          {isAdmin && (
+          {isAdmin ? (
             <>
               <button
                 type="button"
-                onClick={() => setIsCreateFolderOpen(true)}
-                className={styles.primaryAdminBtn}
-                aria-label="Create new folder in current location"
-              >
-                <FolderPlus size={16} aria-hidden="true" />
-                <span>New Folder</span>
-              </button>
-
-              <button
-                type="button"
                 onClick={() => setIsUploadFileOpen(true)}
-                className={styles.primaryAdminBtn}
+                className={styles.uploadPrimaryBtn}
                 aria-label="Upload file to current location"
               >
                 <Upload size={16} aria-hidden="true" />
                 <span>Upload File</span>
               </button>
+
+              <button
+                type="button"
+                onClick={() => setIsCreateFolderOpen(true)}
+                className={styles.newFolderSecondaryBtn}
+                aria-label="Create new folder in current location"
+              >
+                <FolderPlus size={16} aria-hidden="true" />
+                <span>New Folder</span>
+              </button>
             </>
+          ) : (
+            <div className={styles.readOnlyBadge}>
+              <Lock size={14} aria-hidden="true" />
+              <span>Read-Only Access</span>
+            </div>
           )}
 
           <div className={styles.sortGroup}>
@@ -192,6 +179,7 @@ export const StoragePage: React.FC = () => {
               value={sortOption}
               onChange={(e) => setSortOption(e.target.value as SortOptionValue)}
               className={styles.sortSelect}
+              style={{ colorScheme: "dark" }}
             >
               <option value="name_asc">Name A–Z</option>
               <option value="name_desc">Name Z–A</option>
@@ -207,11 +195,44 @@ export const StoragePage: React.FC = () => {
             className={styles.refreshButton}
             aria-label="Refresh storage content"
           >
-            <RefreshCw size={16} className={isRefetching ? "spinner" : ""} aria-hidden="true" />
+            <RefreshCw size={14} className={isRefetching ? "spinner" : ""} aria-hidden="true" />
             <span>Refresh</span>
           </button>
         </div>
       </div>
+
+      {/* Render Location Bar Only for Nested Folders */}
+      {!isRoot && (
+        <div className={styles.locationBar}>
+          <nav aria-label="Folder Breadcrumb Navigation" className={styles.breadcrumbNav}>
+            <ol className={styles.breadcrumbList}>
+              {breadcrumbs.map((item, idx) => {
+                const isLast = idx === breadcrumbs.length - 1;
+                return (
+                  <li key={item.id} className={styles.breadcrumbItem}>
+                    {isLast ? (
+                      <span className={styles.breadcrumbCurrent} aria-current="page">
+                        {item.name}
+                      </span>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => handleNavigateBreadcrumb(idx)}
+                          className={styles.breadcrumbButton}
+                        >
+                          {item.name}
+                        </button>
+                        <ChevronRight size={14} className={styles.separator} aria-hidden="true" />
+                      </>
+                    )}
+                  </li>
+                );
+              })}
+            </ol>
+          </nav>
+        </div>
+      )}
 
       {/* Success Notification Banner */}
       {successBanner && (
@@ -223,16 +244,6 @@ export const StoragePage: React.FC = () => {
           <button type="button" onClick={() => setSuccessBanner(null)} className={styles.actionBtn} aria-label="Dismiss message">
             ✕
           </button>
-        </div>
-      )}
-
-      {/* Summary Bar */}
-      {!isLoading && !foldersQuery.isError && !filesQuery.isError && (
-        <div className={styles.summaryBar}>
-          <span>
-            {folders.length} {folders.length === 1 ? "folder" : "folders"},{" "}
-            {files.length} {files.length === 1 ? "file" : "files"}
-          </span>
         </div>
       )}
 
@@ -266,8 +277,8 @@ export const StoragePage: React.FC = () => {
       {isLoading && (
         <div className={styles.section} data-testid="storage-loading">
           <div className={styles.folderGrid}>
-            <div className={styles.folderCardWrapper} style={{ opacity: 0.6 }}>Loading folders…</div>
-            <div className={styles.folderCardWrapper} style={{ opacity: 0.6 }}>Loading folders…</div>
+            <div className={styles.folderCardWrapper} style={{ opacity: 0.6 }}>Loading storage…</div>
+            <div className={styles.folderCardWrapper} style={{ opacity: 0.6 }}>Loading storage…</div>
           </div>
         </div>
       )}
@@ -277,16 +288,38 @@ export const StoragePage: React.FC = () => {
         <>
           {folders.length === 0 && files.length === 0 ? (
             <div className={styles.emptyState} data-testid="storage-empty">
-              <FolderOpen size={48} aria-hidden="true" />
-              <h3>This folder is empty</h3>
-              <p>No subfolders or files exist in this location.</p>
+              <FolderOpen size={40} className={styles.emptyIcon} aria-hidden="true" />
+              <h3 className={styles.emptyTitle}>This folder is empty</h3>
+              <p className={styles.emptyText}>No subfolders or files exist in this location.</p>
+              {isAdmin ? (
+                <div className={styles.emptyActions}>
+                  <button
+                    type="button"
+                    onClick={() => setIsUploadFileOpen(true)}
+                    className={styles.uploadPrimaryBtn}
+                  >
+                    <Upload size={14} aria-hidden="true" />
+                    <span>Upload File</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsCreateFolderOpen(true)}
+                    className={styles.newFolderSecondaryBtn}
+                  >
+                    <FolderPlus size={14} aria-hidden="true" />
+                    <span>New Folder</span>
+                  </button>
+                </div>
+              ) : (
+                <span className={styles.emptyNotice}>Read-only storage location</span>
+              )}
             </div>
           ) : (
             <>
               {/* Folders Section */}
               {folders.length > 0 && (
                 <section className={styles.section} aria-label="Folders">
-                  <h2 className={styles.sectionHeader}>Folders</h2>
+                  <h2 className={styles.sectionHeader}>Folders ({folders.length})</h2>
                   <div className={styles.folderGrid}>
                     {folders.map((folder) => (
                       <div key={folder.id} className={styles.folderCardWrapper}>
@@ -295,16 +328,13 @@ export const StoragePage: React.FC = () => {
                           onClick={() => handleOpenFolder(folder)}
                           className={styles.folderCardMain}
                         >
-                          <FolderIcon size={24} className={styles.folderIcon} aria-hidden="true" />
+                          <FolderIcon size={20} className={styles.folderIcon} aria-hidden="true" />
                           <div className={styles.folderMeta}>
-                            <span className={styles.folderName}>{folder.name}</span>
-                            <span className={styles.folderDate}>
-                              Updated {formatDate(folder.updatedAt || folder.createdAt)}
-                            </span>
+                            <span className={styles.folderName} title={folder.name}>{folder.name}</span>
+                            <span className={styles.folderDate}>{formatDate(folder.createdAt)}</span>
                           </div>
                         </button>
 
-                        {/* Admin Folder Action Icons */}
                         {isAdmin && (
                           <div className={styles.itemActions}>
                             <button
@@ -315,9 +345,11 @@ export const StoragePage: React.FC = () => {
                               }}
                               className={styles.actionBtn}
                               aria-label={`Rename folder ${folder.name}`}
+                              title={`Rename ${folder.name}`}
                             >
-                              <Edit2 size={14} aria-hidden="true" />
+                              <Edit2 size={18} aria-hidden="true" />
                             </button>
+
                             <button
                               type="button"
                               onClick={(e) => {
@@ -326,14 +358,16 @@ export const StoragePage: React.FC = () => {
                                   id: folder.id,
                                   name: folder.name,
                                   type: "folder",
-                                  currentParentId: folder.parentId
+                                  currentParentId: currentFolder.id === "root" ? null : currentFolder.id
                                 });
                               }}
                               className={styles.actionBtn}
                               aria-label={`Move folder ${folder.name}`}
+                              title={`Move ${folder.name}`}
                             >
-                              <FolderInput size={14} aria-hidden="true" />
+                              <FolderInput size={18} aria-hidden="true" />
                             </button>
+
                             <button
                               type="button"
                               onClick={(e) => {
@@ -342,8 +376,9 @@ export const StoragePage: React.FC = () => {
                               }}
                               className={`${styles.actionBtn} ${styles.dangerActionBtn}`}
                               aria-label={`Delete folder ${folder.name}`}
+                              title={`Delete ${folder.name}`}
                             >
-                              <Trash2 size={14} aria-hidden="true" />
+                              <Trash2 size={18} aria-hidden="true" />
                             </button>
                           </div>
                         )}
@@ -356,73 +391,93 @@ export const StoragePage: React.FC = () => {
               {/* Files Section */}
               {files.length > 0 && (
                 <section className={styles.section} aria-label="Files">
-                  <h2 className={styles.sectionHeader}>Files</h2>
+                  <h2 className={styles.sectionHeader}>Files ({files.length})</h2>
 
-                  {/* Desktop Table View */}
+                  {/* Desktop File Table */}
                   <div className={styles.tableWrapper}>
                     <table className={styles.fileTable}>
                       <thead>
                         <tr>
-                          <th>Name</th>
-                          <th>Type</th>
-                          <th>Size</th>
-                          <th>Modified</th>
-                          {isAdmin && <th>Actions</th>}
+                          <th scope="col">Name</th>
+                          <th scope="col">Size</th>
+                          <th scope="col">Type</th>
+                          <th scope="col">Modified</th>
+                          <th scope="col" style={{ textAlign: "right" }}>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
                         {files.map((file) => (
                           <tr key={file.id}>
                             <td>
-                              <Link
-                                to={`/files/${file.id}`}
-                                style={{ textDecoration: "none", color: "inherit" }}
-                                className={styles.tableNameCell}
-                              >
-                                {getFileIcon(file.mimeType)}
-                                <span>{file.name}</span>
-                              </Link>
+                              <div className={styles.tableNameCell}>
+                                <span className={styles.folderIcon}>{getFileIcon(file.mimeType)}</span>
+                                <Link to={`/files/${file.id}`} className={styles.fileNameLink} title={file.name}>
+                                  {file.name}
+                                </Link>
+                              </div>
                             </td>
-                            <td>{getFileTypeLabel(file.mimeType)}</td>
                             <td>{formatBytes(file.sizeBytes)}</td>
+                            <td>{getFileTypeLabel(file.mimeType)}</td>
                             <td>{formatDate(file.updatedAt || file.createdAt)}</td>
+                            <td style={{ textAlign: "right" }}>
+                              <div className={styles.itemActions} style={{ justifyContent: "flex-end" }}>
+                                <Link
+                                  to={`/files/${file.id}`}
+                                  className={styles.actionBtnText}
+                                  aria-label={`View details for ${file.name}`}
+                                >
+                                  Details
+                                </Link>
 
-                            {/* Admin File Actions (Desktop Table) */}
-                            {isAdmin && (
-                              <td>
-                                <div className={styles.itemActions}>
-                                  <button
-                                    type="button"
-                                    onClick={() => setRenameItem({ id: file.id, name: file.name, type: "file" })}
-                                    className={styles.actionBtn}
-                                    aria-label={`Rename file ${file.name}`}
-                                  >
-                                    <Edit2 size={14} aria-hidden="true" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => setMoveItem({
-                                      id: file.id,
-                                      name: file.name,
-                                      type: "file",
-                                      currentParentId: file.folderId
-                                    })}
-                                    className={styles.actionBtn}
-                                    aria-label={`Move file ${file.name}`}
-                                  >
-                                    <FolderInput size={14} aria-hidden="true" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => setDeleteItem({ id: file.id, name: file.name, type: "file" })}
-                                    className={`${styles.actionBtn} ${styles.dangerActionBtn}`}
-                                    aria-label={`Delete file ${file.name}`}
-                                  >
-                                    <Trash2 size={14} aria-hidden="true" />
-                                  </button>
-                                </div>
-                              </td>
-                            )}
+                                {isAdmin && (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setRenameItem({ id: file.id, name: file.name, type: "file" });
+                                      }}
+                                      className={styles.actionBtn}
+                                      aria-label={`Rename file ${file.name}`}
+                                      title={`Rename ${file.name}`}
+                                    >
+                                      <Edit2 size={18} aria-hidden="true" />
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setMoveItem({
+                                          id: file.id,
+                                          name: file.name,
+                                          type: "file",
+                                          currentParentId: currentFolder.id === "root" ? null : currentFolder.id
+                                        });
+                                      }}
+                                      className={styles.actionBtn}
+                                      aria-label={`Move file ${file.name}`}
+                                      title={`Move ${file.name}`}
+                                    >
+                                      <FolderInput size={18} aria-hidden="true" />
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setDeleteItem({ id: file.id, name: file.name, type: "file" });
+                                      }}
+                                      className={`${styles.actionBtn} ${styles.dangerActionBtn}`}
+                                      aria-label={`Delete file ${file.name}`}
+                                      title={`Delete ${file.name}`}
+                                    >
+                                      <Trash2 size={18} aria-hidden="true" />
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -434,53 +489,65 @@ export const StoragePage: React.FC = () => {
                     {files.map((file) => (
                       <div key={file.id} className={styles.mobileFileCard}>
                         <div className={styles.mobileFileHeader}>
-                          <Link
-                            to={`/files/${file.id}`}
-                            style={{ textDecoration: "none", color: "inherit", display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}
-                          >
-                            {getFileIcon(file.mimeType)}
-                            <span className={styles.folderName}>{file.name}</span>
-                          </Link>
+                          <div className={styles.tableNameCell}>
+                            <span className={styles.folderIcon}>{getFileIcon(file.mimeType)}</span>
+                            <Link to={`/files/${file.id}`} className={styles.fileNameLink} title={file.name}>
+                              {file.name}
+                            </Link>
+                          </div>
 
-                          {/* Admin File Actions (Mobile View) */}
-                          {isAdmin && (
-                            <div className={styles.itemActions}>
-                              <button
-                                type="button"
-                                onClick={() => setRenameItem({ id: file.id, name: file.name, type: "file" })}
-                                className={styles.actionBtn}
-                                aria-label={`Rename file ${file.name}`}
-                              >
-                                <Edit2 size={14} aria-hidden="true" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setMoveItem({
-                                  id: file.id,
-                                  name: file.name,
-                                  type: "file",
-                                  currentParentId: file.folderId
-                                })}
-                                className={styles.actionBtn}
-                                aria-label={`Move file ${file.name}`}
-                              >
-                                <FolderInput size={14} aria-hidden="true" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setDeleteItem({ id: file.id, name: file.name, type: "file" })}
-                                className={`${styles.actionBtn} ${styles.dangerActionBtn}`}
-                                aria-label={`Delete file ${file.name}`}
-                              >
-                                <Trash2 size={14} aria-hidden="true" />
-                              </button>
-                            </div>
-                          )}
+                          <div className={styles.itemActions}>
+                            {isAdmin && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setRenameItem({ id: file.id, name: file.name, type: "file" });
+                                  }}
+                                  className={styles.actionBtn}
+                                  aria-label={`Rename file ${file.name}`}
+                                  title={`Rename ${file.name}`}
+                                >
+                                  <Edit2 size={18} aria-hidden="true" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setMoveItem({
+                                      id: file.id,
+                                      name: file.name,
+                                      type: "file",
+                                      currentParentId: currentFolder.id === "root" ? null : currentFolder.id
+                                    });
+                                  }}
+                                  className={styles.actionBtn}
+                                  aria-label={`Move file ${file.name}`}
+                                  title={`Move ${file.name}`}
+                                >
+                                  <FolderInput size={18} aria-hidden="true" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setDeleteItem({ id: file.id, name: file.name, type: "file" });
+                                  }}
+                                  className={`${styles.actionBtn} ${styles.dangerActionBtn}`}
+                                  aria-label={`Delete file ${file.name}`}
+                                  title={`Delete ${file.name}`}
+                                >
+                                  <Trash2 size={18} aria-hidden="true" />
+                                </button>
+                              </>
+                            )}
+                          </div>
                         </div>
 
                         <div className={styles.mobileFileDetails}>
-                          <span>{getFileTypeLabel(file.mimeType)}</span>
                           <span>{formatBytes(file.sizeBytes)}</span>
+                          <span>{getFileTypeLabel(file.mimeType)}</span>
                           <span>{formatDate(file.updatedAt || file.createdAt)}</span>
                         </div>
                       </div>
@@ -493,43 +560,67 @@ export const StoragePage: React.FC = () => {
         </>
       )}
 
-      {/* Admin Dialogs */}
+      {/* Admin Mutation Dialogs */}
       {isAdmin && (
         <>
           <CreateFolderDialog
             isOpen={isCreateFolderOpen}
             onClose={() => setIsCreateFolderOpen(false)}
             currentFolderId={currentFolder.id}
-            onSuccessMessage={showSuccessMessage}
+            onSuccessMessage={(msg) => {
+              showSuccessMessage(msg);
+              foldersQuery.refetch();
+            }}
           />
 
           <UploadFileDialog
             isOpen={isUploadFileOpen}
             onClose={() => setIsUploadFileOpen(false)}
             currentFolderId={currentFolder.id}
-            onSuccessMessage={showSuccessMessage}
+            onSuccessMessage={(msg) => {
+              showSuccessMessage(msg);
+              filesQuery.refetch();
+            }}
           />
 
-          <RenameItemDialog
-            isOpen={Boolean(renameItem)}
-            onClose={() => setRenameItem(null)}
-            item={renameItem}
-            onSuccessMessage={showSuccessMessage}
-          />
+          {renameItem && (
+            <RenameItemDialog
+              isOpen={Boolean(renameItem)}
+              onClose={() => setRenameItem(null)}
+              item={renameItem}
+              onSuccessMessage={(msg) => {
+                showSuccessMessage(msg);
+                if (renameItem.type === "folder") foldersQuery.refetch();
+                else filesQuery.refetch();
+              }}
+            />
+          )}
 
-          <MoveItemDialog
-            isOpen={Boolean(moveItem)}
-            onClose={() => setMoveItem(null)}
-            item={moveItem}
-            onSuccessMessage={showSuccessMessage}
-          />
+          {moveItem && (
+            <MoveItemDialog
+              isOpen={Boolean(moveItem)}
+              onClose={() => setMoveItem(null)}
+              item={moveItem}
+              onSuccessMessage={(msg) => {
+                showSuccessMessage(msg);
+                if (moveItem.type === "folder") foldersQuery.refetch();
+                else filesQuery.refetch();
+              }}
+            />
+          )}
 
-          <DeleteConfirmDialog
-            isOpen={Boolean(deleteItem)}
-            onClose={() => setDeleteItem(null)}
-            item={deleteItem}
-            onDeletedSuccess={(del) => showSuccessMessage(`Deleted ${del.type} "${del.name}".`)}
-          />
+          {deleteItem && (
+            <DeleteConfirmDialog
+              isOpen={Boolean(deleteItem)}
+              onClose={() => setDeleteItem(null)}
+              item={deleteItem}
+              onDeletedSuccess={() => {
+                showSuccessMessage(`${deleteItem.type === "folder" ? "Folder" : "File"} deleted successfully.`);
+                if (deleteItem.type === "folder") foldersQuery.refetch();
+                else filesQuery.refetch();
+              }}
+            />
+          )}
         </>
       )}
     </div>
