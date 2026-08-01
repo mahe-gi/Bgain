@@ -3,6 +3,7 @@ import { vi, describe, it, expect, beforeEach, afterEach } from "vitest";
 import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, useLocation } from "react-router-dom";
+import { AuthProvider } from "../context/AuthContext.js";
 import { StoragePage } from "../pages/StoragePage.js";
 import * as storageApi from "../api/storage.api.js";
 import type { Folder, FileItem } from "../types/storage.js";
@@ -80,9 +81,11 @@ function renderStorage() {
   const queryClient = createTestQueryClient();
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
-        <StoragePage />
-      </MemoryRouter>
+      <AuthProvider>
+        <MemoryRouter>
+          <StoragePage />
+        </MemoryRouter>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
@@ -286,17 +289,19 @@ describe("Storage Browser Page (Web Phase 2)", () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <MemoryRouter
-          initialEntries={[
-            {
-              pathname: "/storage",
-              state: { initialFolder: { id: "folder-uuid-1", name: "Financial Reports" } }
-            }
-          ]}
-        >
-          <StoragePage />
-          <LocationStateTracker />
-        </MemoryRouter>
+        <AuthProvider>
+          <MemoryRouter
+            initialEntries={[
+              {
+                pathname: "/storage",
+                state: { initialFolder: { id: "folder-uuid-1", name: "Financial Reports" } }
+              }
+            ]}
+          >
+            <StoragePage />
+            <LocationStateTracker />
+          </MemoryRouter>
+        </AuthProvider>
       </QueryClientProvider>
     );
 

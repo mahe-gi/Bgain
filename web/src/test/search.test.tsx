@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { vi, describe, it, expect, beforeEach, afterEach } from "vitest";
 import React from "react";
 import { MemoryRouter, Routes, Route, useLocation } from "react-router-dom";
+import { AuthProvider } from "../context/AuthContext.js";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SearchPage } from "../pages/SearchPage.js";
 import { StoragePage } from "../pages/StoragePage.js";
@@ -67,14 +68,16 @@ function renderSearch(initialEntry = "/search") {
   const queryClient = createTestQueryClient();
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[initialEntry]}>
-        <Routes>
-          <Route path="/search" element={<SearchPage />} />
-          <Route path="/storage" element={<StoragePage />} />
-          <Route path="/files/:fileId" element={<div>File Details Page</div>} />
-        </Routes>
-        <LocationDisplay />
-      </MemoryRouter>
+      <AuthProvider>
+        <MemoryRouter initialEntries={[initialEntry]}>
+          <Routes>
+            <Route path="/search" element={<SearchPage />} />
+            <Route path="/storage" element={<StoragePage />} />
+            <Route path="/files/:fileId" element={<div>File Details Page</div>} />
+          </Routes>
+          <LocationDisplay />
+        </MemoryRouter>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

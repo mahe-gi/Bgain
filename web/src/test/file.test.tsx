@@ -3,6 +3,7 @@ import { vi, describe, it, expect, beforeEach, afterEach } from "vitest";
 import React from "react";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { AuthProvider } from "../context/AuthContext.js";
 import { FileDetailsPage } from "../pages/FileDetailsPage.js";
 import * as fileApi from "../api/file.api.js";
 import type { FileItem } from "../types/storage.js";
@@ -69,11 +70,13 @@ function renderFileDetails(fileId: string) {
   const queryClient = createTestQueryClient();
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[`/files/${fileId}`]}>
-        <Routes>
-          <Route path="/files/:fileId" element={<FileDetailsPage />} />
-        </Routes>
-      </MemoryRouter>
+      <AuthProvider>
+        <MemoryRouter initialEntries={[`/files/${fileId}`]}>
+          <Routes>
+            <Route path="/files/:fileId" element={<FileDetailsPage />} />
+          </Routes>
+        </MemoryRouter>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

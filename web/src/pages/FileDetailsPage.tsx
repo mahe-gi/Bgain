@@ -10,11 +10,18 @@ import {
   FileCode,
   File,
   AlertCircle,
-  Info
+  Info,
+  Edit2,
+  FolderInput,
+  Trash2
 } from "lucide-react";
+import { useAuth } from "../hooks/useAuth.js";
 import { getFileDetailsApi, getPreviewUrlApi, getDownloadUrlApi } from "../api/file.api.js";
 import { getErrorMessage } from "../api/client.js";
 import { formatBytes, formatDate, getFileTypeLabel } from "../utils/formatters.js";
+import { RenameItemDialog } from "../components/dialogs/RenameItemDialog.js";
+import { MoveItemDialog } from "../components/dialogs/MoveItemDialog.js";
+import { DeleteConfirmDialog } from "../components/dialogs/DeleteConfirmDialog.js";
 import styles from "./FileDetailsPage.module.css";
 
 function getFileIcon(mimeType: string) {
@@ -36,6 +43,8 @@ function isSupportedPreview(mimeType: string): boolean {
 export const FileDetailsPage: React.FC = () => {
   const { fileId } = useParams<{ fileId: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "ADMIN";
 
   // Component state for signed URLs and TXT content
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -45,6 +54,11 @@ export const FileDetailsPage: React.FC = () => {
 
   const [downloadLoading, setDownloadLoading] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
+
+  // Admin Dialog States
+  const [isRenameOpen, setIsRenameOpen] = useState(false);
+  const [isMoveOpen, setIsMoveOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   // Clear preview state when file ID changes
   useEffect(() => {
@@ -81,7 +95,6 @@ export const FileDetailsPage: React.FC = () => {
       const response = await getPreviewUrlApi(fileId);
       setPreviewUrl(response.url);
 
-      // If text file, fetch unauthenticated plain text content
       if (file.mimeType.startsWith("text/")) {
         const textRes = await fetch(response.url);
         if (!textRes.ok) {
@@ -104,7 +117,6 @@ export const FileDetailsPage: React.FC = () => {
 
     try {
       const response = await getDownloadUrlApi(fileId);
-      // Trigger browser download using clean unauthenticated link
       const link = document.createElement("a");
       link.href = response.url;
       link.download = file.name;
@@ -214,6 +226,42 @@ export const FileDetailsPage: React.FC = () => {
               <Download size={16} aria-hidden="true" />
               <span>{downloadLoading ? "Preparing Download…" : "Download"}</span>
             </button>
+
+            {/* Admin Action Buttons */}
+            {isAdmin && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setIsRenameOpen(true)}
+                  className={styles.secondaryButton}
+                  aria-label="Rename file"
+                >
+                  <Edit2 size={16} aria-hidden="true" />
+                  <span>Rename</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsMoveOpen(true)}
+                  className={styles.secondaryButton}
+                  aria-label="Move file"
+                >
+                  <FolderInput size={16} aria-hidden="true" />
+                  <span>Move</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsDeleteOpen(true)}
+                  className={styles.secondaryButton}
+                  style={{ color: "var(--color-danger)", borderColor: "var(--color-danger-border)" }}
+                  aria-label="Delete file"
+                >
+                  <Trash2 size={16} aria-hidden="true" />
+                  <span>Delete</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
 
@@ -291,6 +339,32 @@ export const FileDetailsPage: React.FC = () => {
           </div>
         )}
       </section>
+
+      {/* Admin Mutation Dialogs */}
+      {isAdmin && (
+        <>
+          <RenameItemDialog
+            isOpen={isRenameOpen}
+            onClose={() => setIsRenameOpen(false)}
+            item={{ id: file.id, name: file.name, type: "file" }}
+            onSuccessMessage={() => refetch()}
+          />
+
+          <MoveItemDialog
+            isOpen={isMoveOpen}
+            onClose={() => setIsMoveOpen(false)}
+            item={{ id: file.id, name: file.name, type: "file", currentParentId: file.folderId }}
+            onSuccessMessage={() => refetch()}
+          />
+
+          <DeleteConfirmDialog
+            isOpen={isDeleteOpen}
+            onClose={() => setIsDeleteOpen(false)}
+            item={{ id: file.id, name: file.name, type: "file" }}
+            onDeletedSuccess={() => navigate("/storage")}
+          />
+        </>
+      )}
     </div>
   );
 };

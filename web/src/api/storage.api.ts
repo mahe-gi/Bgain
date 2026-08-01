@@ -23,3 +23,20 @@ export async function getFilesApi(params: GetFilesParams): Promise<FileItem[]> {
   });
   return response.data.data.files;
 }
+
+export async function createFolderApi(data: { name: string; parentId: string | null }): Promise<Folder> {
+  const response = await apiClient.post<ApiSuccessEnvelope<Folder>>("/folders", data);
+  return response.data.data;
+}
+
+export async function updateFolderApi(
+  id: string,
+  data: { name?: string; parentId?: string | null }
+): Promise<Folder> {
+  const response = await apiClient.patch<ApiSuccessEnvelope<Folder>>(`/folders/${id}`, data);
+  return response.data.data;
+}
+
+export async function deleteFolderApi(id: string): Promise<void> {
+  await apiClient.delete(`/folders/${id}`);
+}
