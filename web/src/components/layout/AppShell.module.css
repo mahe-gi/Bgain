@@ -1,0 +1,28 @@
+.shell {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--color-bg-primary);
+}
+
+.mainWrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.content {
+  flex: 1;
+  padding: var(--space-6);
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* Mobile responsive padding so content is not hidden behind bottom nav */
+@media (max-width: 767px) {
+  .content {
+    padding: var(--space-4);
+    padding-bottom: calc(var(--mobile-nav-height) + var(--space-4));
+  }
+}

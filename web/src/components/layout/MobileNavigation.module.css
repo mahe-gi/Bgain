@@ -1,0 +1,51 @@
+.mobileNav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--mobile-nav-height);
+  background-color: var(--color-bg-surface);
+  border-top: 1px solid var(--color-border);
+  z-index: 100;
+}
+
+.navList {
+  display: flex;
+  height: 100%;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.navItem {
+  flex: 1;
+  display: flex;
+}
+
+.navLink {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  transition: color 0.15s ease;
+}
+
+.navLink:hover {
+  color: var(--color-text-primary);
+}
+
+.active {
+  color: var(--color-primary) !important;
+}
+
+@media (max-width: 767px) {
+  .mobileNav {
+    display: flex;
+  }
+}
