@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { vi, describe, it, expect, beforeEach, afterEach } from "vitest";
 import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import { StoragePage } from "../pages/StoragePage.js";
 import * as storageApi from "../api/storage.api.js";
 import type { Folder, FileItem } from "../types/storage.js";
@@ -79,7 +80,9 @@ function renderStorage() {
   const queryClient = createTestQueryClient();
   return render(
     <QueryClientProvider client={queryClient}>
-      <StoragePage />
+      <MemoryRouter>
+        <StoragePage />
+      </MemoryRouter>
     </QueryClientProvider>
   );
 }
@@ -265,6 +268,46 @@ describe("Storage Browser Page (Web Phase 2)", () => {
       expect(screen.queryByRole("button", { name: /upload/i })).not.toBeInTheDocument();
       expect(screen.queryByRole("button", { name: /create folder/i })).not.toBeInTheDocument();
       expect(screen.queryByRole("button", { name: /delete/i })).not.toBeInTheDocument();
+    });
+  });
+
+  it("10. Consumes initialFolder location state once and clears state via navigate replace", async () => {
+    vi.mocked(storageApi.getFoldersApi).mockImplementation(async () => mockNestedFolders);
+    vi.mocked(storageApi.getFilesApi).mockImplementation(async () => mockNestedFiles);
+
+    const queryClient = createTestQueryClient();
+    let currentLocationState: unknown = "NOT_SET";
+
+    function LocationStateTracker() {
+      const location = useLocation();
+      currentLocationState = location.state;
+      return null;
+    }
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter
+          initialEntries={[
+            {
+              pathname: "/storage",
+              state: { initialFolder: { id: "folder-uuid-1", name: "Financial Reports" } }
+            }
+          ]}
+        >
+          <StoragePage />
+          <LocationStateTracker />
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+
+    // Verify initial folder breadcrumb is loaded
+    await waitFor(() => {
+      expect(screen.getByText("2026 Q1")).toBeInTheDocument();
+    });
+
+    // Verify location.state was cleared to null via navigate({ replace: true, state: null })
+    await waitFor(() => {
+      expect(currentLocationState).toBeNull();
     });
   });
 });

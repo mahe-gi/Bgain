@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Folder, FileText, HardDrive, File, Image, FileCode, AlertCircle } from "lucide-react";
 import { getDashboardApi } from "../api/dashboard.api.js";
@@ -97,7 +98,7 @@ export const DashboardPage: React.FC = () => {
         ) : (
           <div className={styles.fileList}>
             {recentFiles.slice(0, 5).map((file) => (
-              <div key={file.id} className={styles.fileItem}>
+              <Link key={file.id} to={`/files/${file.id}`} className={styles.fileItem}>
                 <div className={styles.fileMain}>
                   <span className={styles.fileIcon}>{getFileIcon(file.mimeType)}</span>
                   <div className={styles.fileInfo}>
@@ -110,7 +111,7 @@ export const DashboardPage: React.FC = () => {
                   <span>{formatBytes(file.sizeBytes)}</span>
                   <span>{formatDate(file.createdAt)}</span>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}

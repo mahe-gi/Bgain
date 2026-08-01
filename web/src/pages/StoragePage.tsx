@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   Folder as FolderIcon,
@@ -40,10 +41,28 @@ function parseSortOption(sortOption: SortOptionValue): { sortBy: StorageSortFiel
 }
 
 export const StoragePage: React.FC = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const locationState = location.state as { initialFolder?: { id: string; name: string } } | null;
+
   // Navigation State
-  const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([
-    { id: "root", name: "Storage" }
-  ]);
+  const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>(() => {
+    if (locationState?.initialFolder) {
+      return [
+        { id: "root", name: "Storage" },
+        { id: locationState.initialFolder.id, name: locationState.initialFolder.name }
+      ];
+    }
+    return [{ id: "root", name: "Storage" }];
+  });
+
+  // Clear consumed navigation state using React Router navigate
+  useEffect(() => {
+    if (locationState?.initialFolder) {
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [locationState, location.pathname, navigate]);
+
   const [sortOption, setSortOption] = useState<SortOptionValue>("name_asc");
 
   const currentFolder = breadcrumbs[breadcrumbs.length - 1];
@@ -243,10 +262,14 @@ export const StoragePage: React.FC = () => {
                         {files.map((file) => (
                           <tr key={file.id}>
                             <td>
-                              <div className={styles.tableNameCell}>
+                              <Link
+                                to={`/files/${file.id}`}
+                                style={{ textDecoration: "none", color: "inherit" }}
+                                className={styles.tableNameCell}
+                              >
                                 {getFileIcon(file.mimeType)}
                                 <span>{file.name}</span>
-                              </div>
+                              </Link>
                             </td>
                             <td>{getFileTypeLabel(file.mimeType)}</td>
                             <td>{formatBytes(file.sizeBytes)}</td>
@@ -260,7 +283,12 @@ export const StoragePage: React.FC = () => {
                   {/* Mobile Stacked Card View */}
                   <div className={styles.mobileFileList}>
                     {files.map((file) => (
-                      <div key={file.id} className={styles.mobileFileCard}>
+                      <Link
+                        key={file.id}
+                        to={`/files/${file.id}`}
+                        className={styles.mobileFileCard}
+                        style={{ textDecoration: "none", color: "inherit" }}
+                      >
                         <div className={styles.mobileFileHeader}>
                           {getFileIcon(file.mimeType)}
                           <span className={styles.folderName}>{file.name}</span>
@@ -270,7 +298,7 @@ export const StoragePage: React.FC = () => {
                           <span>{formatBytes(file.sizeBytes)}</span>
                           <span>{formatDate(file.updatedAt || file.createdAt)}</span>
                         </div>
-                      </div>
+                      </Link>
                     ))}
                   </div>
                 </section>

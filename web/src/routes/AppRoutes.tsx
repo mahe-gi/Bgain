@@ -11,6 +11,8 @@ import { ProtectedRoute } from "../components/auth/ProtectedRoute.js";
 import { AdminRoute } from "../components/auth/AdminRoute.js";
 import { AppShell } from "../components/layout/AppShell.js";
 
+import { FileDetailsPage } from "../pages/FileDetailsPage.js";
+
 export const AppRoutes: React.FC = () => {
   return (
     <Routes>
@@ -25,6 +27,7 @@ export const AppRoutes: React.FC = () => {
         <Route element={<AppShell />}>
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/storage" element={<StoragePage />} />
+          <Route path="/files/:fileId" element={<FileDetailsPage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/profile" element={<ProfilePage />} />
         </Route>
