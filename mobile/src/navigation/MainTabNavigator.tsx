@@ -1,5 +1,6 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   LayoutDashboard,
   Folder,
@@ -13,34 +14,47 @@ import { StorageScreen } from '../screens/StorageScreen';
 import { SearchScreen } from '../screens/SearchScreen';
 import { UsersScreen } from '../screens/UsersScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
+import { FileDetailsScreen } from '../screens/FileDetailsScreen';
 import type { MainTabParamList } from './types';
 import { theme } from '../styles/theme';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
-const renderHomeIcon = ({ color, size }: { color: string; size: number }) => (
-  <LayoutDashboard color={color} size={size} />
+const renderHomeIcon = ({ color }: { color: string; size: number }) => (
+  <LayoutDashboard color={color} size={20} />
 );
 
-const renderStorageIcon = ({ color, size }: { color: string; size: number }) => (
-  <Folder color={color} size={size} />
+const renderStorageIcon = ({ color }: { color: string; size: number }) => (
+  <Folder color={color} size={20} />
 );
 
-const renderSearchIcon = ({ color, size }: { color: string; size: number }) => (
-  <Search color={color} size={size} />
+const renderSearchIcon = ({ color }: { color: string; size: number }) => (
+  <Search color={color} size={20} />
 );
 
-const renderUsersIcon = ({ color, size }: { color: string; size: number }) => (
-  <Users color={color} size={size} />
+const renderUsersIcon = ({ color }: { color: string; size: number }) => (
+  <Users color={color} size={20} />
 );
 
-const renderProfileIcon = ({ color, size }: { color: string; size: number }) => (
-  <User color={color} size={size} />
+const renderProfileIcon = ({ color }: { color: string; size: number }) => (
+  <User color={color} size={20} />
 );
 
 export const MainTabNavigator: React.FC = () => {
   const { user } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
+
+  let bottomInset = 0;
+  try {
+    const insets = useSafeAreaInsets();
+    bottomInset = insets?.bottom ?? 0;
+  } catch {
+    bottomInset = 0;
+  }
+
+  const BASE_TAB_BAR_HEIGHT = 60;
+  const bottomPadding = Math.max(bottomInset, 6);
+  const tabBarHeight = BASE_TAB_BAR_HEIGHT + bottomInset;
 
   return (
     <Tab.Navigator
@@ -51,13 +65,28 @@ export const MainTabNavigator: React.FC = () => {
         tabBarStyle: {
           backgroundColor: theme.colors.surfacePrimary,
           borderTopColor: theme.colors.border,
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 8,
+          borderTopWidth: 1,
+          height: tabBarHeight,
+          paddingTop: 6,
+          paddingBottom: bottomPadding,
+          elevation: 8,
+        },
+        tabBarItemStyle: {
+          flex: 1,
+          minWidth: 0,
+          paddingHorizontal: 2,
+          justifyContent: 'center',
+          alignItems: 'center',
         },
         tabBarLabelStyle: {
-          fontSize: 11,
+          fontSize: 10,
           fontWeight: '600',
+          marginTop: 2,
+          marginBottom: 0,
+          textAlign: 'center',
+        },
+        tabBarIconStyle: {
+          marginBottom: 0,
         },
         sceneStyle: {
           backgroundColor: theme.colors.canvas,
@@ -108,6 +137,15 @@ export const MainTabNavigator: React.FC = () => {
         options={{
           tabBarLabel: 'Profile',
           tabBarIcon: renderProfileIcon,
+        }}
+      />
+
+      <Tab.Screen
+        name="FileDetails"
+        component={FileDetailsScreen}
+        options={{
+          tabBarButton: () => null,
+          tabBarItemStyle: { display: 'none' },
         }}
       />
     </Tab.Navigator>
