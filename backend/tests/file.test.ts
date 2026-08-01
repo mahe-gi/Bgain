@@ -58,13 +58,14 @@ describe("File APIs & Storage Tests (Phase 6 & Phase 7)", { timeout: 60000 }, ()
   });
 
   it("1. Admin uploads each allowed file type", async () => {
+    const testUuid = crypto.randomUUID().slice(0, 8);
     const allowedTypes = [
-      { name: "test-file-1.pdf", mime: "application/pdf" },
-      { name: "test-file-2.jpg", mime: "image/jpeg" },
-      { name: "test-file-3.png", mime: "image/png" },
-      { name: "test-file-4.txt", mime: "text/plain" },
-      { name: "test-file-5.docx", mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" },
-      { name: "test-file-6.xlsx", mime: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }
+      { name: `test-file-1-${testUuid}.pdf`, mime: "application/pdf" },
+      { name: `test-file-2-${testUuid}.jpg`, mime: "image/jpeg" },
+      { name: `test-file-3-${testUuid}.png`, mime: "image/png" },
+      { name: `test-file-4-${testUuid}.txt`, mime: "text/plain" },
+      { name: `test-file-5-${testUuid}.docx`, mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" },
+      { name: `test-file-6-${testUuid}.xlsx`, mime: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }
     ];
 
     for (const t of allowedTypes) {
@@ -259,7 +260,7 @@ describe("File APIs & Storage Tests (Phase 6 & Phase 7)", { timeout: 60000 }, ()
     expect(res.status).toBe(200);
     const files = res.body.data.files;
     for (let i = 0; i < files.length - 1; i++) {
-      expect(files[i].name.localeCompare(files[i + 1].name)).toBeLessThanOrEqual(0);
+      expect(files[i].name <= files[i + 1].name).toBe(true);
     }
   });
 

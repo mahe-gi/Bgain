@@ -28,13 +28,23 @@ export const createApp = (): Express => {
     })
   );
 
-  // Logging middleware (disable logs during tests)
+  // Logging middleware with sensitive header & body redaction (disabled during tests)
   if (env.NODE_ENV !== "test") {
-    app.use(pinoHttp());
+    app.use(
+      pinoHttp({
+        redact: [
+          "req.headers.authorization",
+          "req.headers.cookie",
+          "req.body.password",
+          "req.body.passwordHash",
+          "req.body.secret"
+        ]
+      })
+    );
   }
 
-  // Body parsing middleware
-  app.use(express.json());
+  // Body parsing middleware with 1 MB size limit
+  app.use(express.json({ limit: "1mb" }));
 
   // Rate limiting middleware
   app.use("/api", globalRateLimiter);
