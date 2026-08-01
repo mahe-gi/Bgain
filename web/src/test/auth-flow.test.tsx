@@ -9,24 +9,34 @@ import { AdminRoute } from "../components/auth/AdminRoute.js";
 import { AppShell } from "../components/layout/AppShell.js";
 import { LoginPage } from "../pages/LoginPage.js";
 import { DashboardPage } from "../pages/DashboardPage.js";
-import { UsersPage } from "../pages/UsersPage.js";
+import { ProfilePage } from "../pages/ProfilePage.js";
 import * as authApi from "../api/auth.api.js";
-import { SafeUser } from "../types/auth.js";
+import * as dashboardApi from "../api/dashboard.api.js";
+import type { SafeUser } from "../types/auth.js";
+
+vi.mock("../api/auth.api.js", () => ({
+  loginApi: vi.fn(),
+  getMeApi: vi.fn()
+}));
+
+vi.mock("../api/dashboard.api.js", () => ({
+  getDashboardApi: vi.fn()
+}));
 
 const mockAdminUser: SafeUser = {
-  id: "admin-uuid-1",
+  id: "admin-uuid-123",
   name: "Demo Admin",
   email: "admin@example.com",
   role: "ADMIN",
-  createdAt: "2026-01-01T00:00:00.000Z"
+  createdAt: "2026-07-01T00:00:00.000Z"
 };
 
 const mockViewerUser: SafeUser = {
-  id: "viewer-uuid-2",
+  id: "viewer-uuid-456",
   name: "Demo Viewer",
   email: "viewer@example.com",
   role: "VIEWER",
-  createdAt: "2026-01-01T00:00:00.000Z"
+  createdAt: "2026-07-01T00:00:00.000Z"
 };
 
 function createTestQueryClient() {
@@ -41,32 +51,41 @@ function renderWithAuth(initialEntries = ["/dashboard"]) {
   const queryClient = createTestQueryClient();
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={initialEntries}>
-        <AuthProvider>
+      <AuthProvider>
+        <MemoryRouter initialEntries={initialEntries}>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+
             <Route element={<ProtectedRoute />}>
               <Route element={<AppShell />}>
                 <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/storage" element={<div>Storage Page</div>} />
+
+                <Route element={<AdminRoute />}>
+                  <Route path="/users" element={<div>User Management</div>} />
+                </Route>
               </Route>
             </Route>
-            <Route element={<AdminRoute />}>
-              <Route element={<AppShell />}>
-                <Route path="/users" element={<UsersPage />} />
-              </Route>
-            </Route>
+
+            <Route path="/403" element={<div>403 - Access Denied</div>} />
           </Routes>
-        </AuthProvider>
-      </MemoryRouter>
+        </MemoryRouter>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
 
-describe("Web Phase 1 Auth & Routing Tests", () => {
+describe("Web Phase 1 Authentication Flow & Protected Routing", () => {
   beforeEach(() => {
     sessionStorage.clear();
     vi.restoreAllMocks();
-    vi.spyOn(authApi, "getMeApi").mockRejectedValue(new Error("No active session"));
+    vi.mocked(dashboardApi.getDashboardApi).mockResolvedValue({
+      folderCount: 0,
+      fileCount: 0,
+      totalSizeBytes: 0,
+      recentFiles: []
+    });
   });
 
   afterEach(() => {
@@ -74,7 +93,9 @@ describe("Web Phase 1 Auth & Routing Tests", () => {
     vi.restoreAllMocks();
   });
 
-  it("1. Unauthenticated user accessing protected route /dashboard is redirected to /login", async () => {
+  it("1. Unauthenticated user accessing /dashboard is redirected to /login", async () => {
+    vi.spyOn(authApi, "getMeApi").mockRejectedValue(new Error("Unauthorized"));
+
     renderWithAuth(["/dashboard"]);
 
     await waitFor(() => {
@@ -82,11 +103,13 @@ describe("Web Phase 1 Auth & Routing Tests", () => {
     });
   });
 
-  it("2. Login required-field validation shows error if fields are empty", async () => {
+  it("2. Displays client-side validation errors when submitting empty login form", async () => {
+    vi.spyOn(authApi, "getMeApi").mockRejectedValue(new Error("Unauthorized"));
+
     renderWithAuth(["/login"]);
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: /sign in/i })).toBeInTheDocument();
+      expect(screen.getByText("Sign in to access your storage management system")).toBeInTheDocument();
     });
 
     const submitBtn = screen.getByRole("button", { name: /sign in/i });
@@ -117,8 +140,7 @@ describe("Web Phase 1 Auth & Routing Tests", () => {
     await waitFor(() => {
       expect(loginSpy).toHaveBeenCalledWith("admin@example.com", "AdminPassword123!");
       expect(sessionStorage.getItem("accessToken")).toBe("fake-admin-token");
-      expect(screen.getByText("Dashboard Overview")).toBeInTheDocument();
-      expect(screen.getByText("Demo Admin")).toBeInTheDocument();
+      expect(screen.getByText("Total Folders")).toBeInTheDocument();
     });
   });
 
@@ -150,7 +172,7 @@ describe("Web Phase 1 Auth & Routing Tests", () => {
     renderWithAuth(["/dashboard"]);
 
     await waitFor(() => {
-      expect(screen.getByText("Dashboard Overview")).toBeInTheDocument();
+      expect(screen.getByText("Total Folders")).toBeInTheDocument();
       expect(screen.getByText("Demo Admin")).toBeInTheDocument();
       expect(screen.getByText("ADMIN")).toBeInTheDocument();
     });
@@ -192,7 +214,7 @@ describe("Web Phase 1 Auth & Routing Tests", () => {
     renderWithAuth(["/dashboard"]);
 
     await waitFor(() => {
-      expect(screen.getByText("Dashboard Overview")).toBeInTheDocument();
+      expect(screen.getByText("Total Folders")).toBeInTheDocument();
       expect(screen.queryByText("Users")).not.toBeInTheDocument();
     });
   });
