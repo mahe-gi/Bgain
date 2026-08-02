@@ -7,9 +7,6 @@ const apiBaseUrl = Config.API_BASE_URL || 'http://127.0.0.1:4000/api';
 export const apiClient = axios.create({
   baseURL: apiBaseUrl,
   timeout: 15000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
 });
 
 type UnauthorizedHandler = () => void;

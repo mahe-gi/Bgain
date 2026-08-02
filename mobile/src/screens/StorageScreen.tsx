@@ -8,14 +8,21 @@ import {
   BackHandler,
   StyleSheet,
 } from 'react-native';
-import { ArrowLeft, ChevronRight } from 'lucide-react-native';
+import { ArrowLeft, ChevronRight, FolderPlus, Upload } from 'lucide-react-native';
 import { useFocusEffect, useRoute, useNavigation } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { useFolderContents } from '../hooks/useFolderContents';
+import { useAuth } from '../hooks/useAuth';
 import { FolderRow } from '../components/FolderRow';
 import { FileRow } from '../components/FileRow';
 import { ScreenState } from '../components/ScreenState';
+import { CreateFolderModal } from '../components/modals/CreateFolderModal';
+import { UploadFileModal } from '../components/modals/UploadFileModal';
+import { RenameModal } from '../components/modals/RenameModal';
+import { MoveModal } from '../components/modals/MoveModal';
+import { DeleteConfirmModal } from '../components/modals/DeleteConfirmModal';
+import { ItemActionModal } from '../components/modals/ItemActionModal';
 import { getErrorMessage } from '../api/client';
 import { theme } from '../styles/theme';
 import type { MainTabParamList } from '../navigation/types';
@@ -25,15 +32,36 @@ export interface FolderStackNode {
   name: string;
 }
 
+type ActiveActionItem = {
+  id: string;
+  name: string;
+  type: 'folder' | 'file';
+  currentFolderId: string | null;
+  mimeType?: string;
+};
+
 export const StorageScreen: React.FC = () => {
   const route = useRoute<RouteProp<MainTabParamList, 'Storage'>>();
   const navigation = useNavigation<BottomTabNavigationProp<MainTabParamList>>();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
 
   const [folderStack, setFolderStack] = useState<FolderStackNode[]>([
     { id: 'root', name: 'Storage' },
   ]);
 
+  // Modal States
+  const [showCreateFolder, setShowCreateFolder] = useState(false);
+  const [showUploadFile, setShowUploadFile] = useState(false);
+  const [activeItem, setActiveItem] = useState<ActiveActionItem | null>(null);
+
+  const [showActionModal, setShowActionModal] = useState(false);
+  const [showRenameModal, setShowRenameModal] = useState(false);
+  const [showMoveModal, setShowMoveModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
   const currentFolder = folderStack[folderStack.length - 1];
+  const currentFolderId = currentFolder.id === 'root' ? null : currentFolder.id;
 
   const {
     folders,
@@ -185,6 +213,33 @@ export const StorageScreen: React.FC = () => {
               ? 'All files and folders in root storage'
               : `Contents of ${currentFolder.name}`}
           </Text>
+
+          {/* Admin Mutation Action Bar */}
+          {isAdmin && (
+            <View style={styles.adminActionBar} testID="admin-action-bar">
+              <TouchableOpacity
+                style={styles.adminActionButton}
+                onPress={() => setShowCreateFolder(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Create new folder"
+                testID="btn-new-folder"
+              >
+                <FolderPlus color={theme.colors.primary} size={18} style={styles.adminActionIcon} />
+                <Text style={styles.adminActionText}>New Folder</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.adminActionButton}
+                onPress={() => setShowUploadFile(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Upload file"
+                testID="btn-upload-file"
+              >
+                <Upload color={theme.colors.primary} size={18} style={styles.adminActionIcon} />
+                <Text style={styles.adminActionText}>Upload File</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
         {/* Empty State */}
@@ -207,6 +262,19 @@ export const StorageScreen: React.FC = () => {
                 key={folder.id}
                 folder={folder}
                 onPress={() => pushFolder({ id: folder.id, name: folder.name })}
+                onActionsPress={
+                  isAdmin
+                    ? () => {
+                        setActiveItem({
+                          id: folder.id,
+                          name: folder.name,
+                          type: 'folder',
+                          currentFolderId,
+                        });
+                        setShowActionModal(true);
+                      }
+                    : undefined
+                }
               />
             ))}
           </View>
@@ -223,11 +291,78 @@ export const StorageScreen: React.FC = () => {
                 key={file.id}
                 file={file}
                 onPress={() => navigation.navigate('FileDetails', { fileId: file.id })}
+                onActionsPress={
+                  isAdmin
+                    ? () => {
+                        setActiveItem({
+                          id: file.id,
+                          name: file.name,
+                          type: 'file',
+                          currentFolderId,
+                          mimeType: file.mimeType,
+                        });
+                        setShowActionModal(true);
+                      }
+                    : undefined
+                }
               />
             ))}
           </View>
         )}
       </ScrollView>
+
+      {/* Admin Mutation Modals */}
+      {isAdmin && (
+        <>
+          <CreateFolderModal
+            visible={showCreateFolder}
+            currentFolderId={currentFolderId}
+            onClose={() => setShowCreateFolder(false)}
+          />
+
+          <UploadFileModal
+            visible={showUploadFile}
+            currentFolderId={currentFolderId}
+            onClose={() => setShowUploadFile(false)}
+          />
+
+          <ItemActionModal
+            visible={showActionModal}
+            item={activeItem}
+            onClose={() => setShowActionModal(false)}
+            onRename={() => setShowRenameModal(true)}
+            onMove={() => setShowMoveModal(true)}
+            onDelete={() => setShowDeleteModal(true)}
+          />
+
+          <RenameModal
+            visible={showRenameModal}
+            item={activeItem}
+            onClose={() => {
+              setShowRenameModal(false);
+              setActiveItem(null);
+            }}
+          />
+
+          <MoveModal
+            visible={showMoveModal}
+            item={activeItem}
+            onClose={() => {
+              setShowMoveModal(false);
+              setActiveItem(null);
+            }}
+          />
+
+          <DeleteConfirmModal
+            visible={showDeleteModal}
+            item={activeItem}
+            onClose={() => {
+              setShowDeleteModal(false);
+              setActiveItem(null);
+            }}
+          />
+        </>
+      )}
     </View>
   );
 };
@@ -290,6 +425,32 @@ const styles = StyleSheet.create({
   folderSubtitle: {
     fontSize: theme.typography.sm,
     color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.sm,
+  },
+  adminActionBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: theme.spacing.sm,
+  },
+  adminActionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.surfacePrimary,
+    borderColor: theme.colors.border,
+    borderWidth: 1,
+    borderRadius: theme.radii.sm,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    marginRight: theme.spacing.sm,
+    minHeight: 44,
+  },
+  adminActionIcon: {
+    marginRight: theme.spacing.xs,
+  },
+  adminActionText: {
+    color: theme.colors.primary,
+    fontSize: theme.typography.xs,
+    fontWeight: '700',
   },
   section: {
     marginBottom: theme.spacing.lg,

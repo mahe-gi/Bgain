@@ -23,3 +23,29 @@ export async function getFilesApi(params?: FileQueryInput): Promise<SafeFile[]> 
   });
   return response.data.data.files;
 }
+
+export async function createFolderApi(
+  name: string,
+  parentId?: string | null
+): Promise<SafeFolder> {
+  const response = await apiClient.post<ApiSuccess<{ folder: SafeFolder }>>('/folders', {
+    name,
+    parentId: parentId || null,
+  });
+  return response.data.data.folder;
+}
+
+export async function updateFolderApi(
+  folderId: string,
+  payload: { name?: string; parentId?: string | null }
+): Promise<SafeFolder> {
+  const response = await apiClient.patch<ApiSuccess<{ folder: SafeFolder }>>(
+    `/folders/${folderId}`,
+    payload
+  );
+  return response.data.data.folder;
+}
+
+export async function deleteFolderApi(folderId: string): Promise<void> {
+  await apiClient.delete(`/folders/${folderId}`);
+}

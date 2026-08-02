@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { FileText, Image as ImageIcon, FileCode, Film, Music, File, ChevronRight } from 'lucide-react-native';
+import { FileText, Image as ImageIcon, FileCode, Film, Music, File, ChevronRight, MoreVertical } from 'lucide-react-native';
 import { theme } from '../styles/theme';
 import { formatBytes, formatDate, getFileTypeLabel } from '../utils/formatters';
 import type { SafeFile } from '../types/storage';
@@ -8,6 +8,7 @@ import type { SafeFile } from '../types/storage';
 interface FileRowProps {
   file: SafeFile;
   onPress?: () => void;
+  onActionsPress?: () => void;
 }
 
 function renderFileIcon(mimeType: string) {
@@ -30,7 +31,7 @@ function renderFileIcon(mimeType: string) {
   return <File color={theme.colors.primary} size={20} accessibilityElementsHidden />;
 }
 
-export const FileRow: React.FC<FileRowProps> = ({ file, onPress }) => {
+export const FileRow: React.FC<FileRowProps> = ({ file, onPress, onActionsPress }) => {
   const typeLabel = getFileTypeLabel(file.mimeType);
   const formattedSize = formatBytes(file.sizeBytes);
   const formattedDate = formatDate(file.createdAt);
@@ -47,7 +48,22 @@ export const FileRow: React.FC<FileRowProps> = ({ file, onPress }) => {
           {typeLabel} • {formattedSize} • {formattedDate}
         </Text>
       </View>
-      {onPress && <ChevronRight color={theme.colors.textMuted} size={18} accessibilityElementsHidden />}
+      {onActionsPress ? (
+        <TouchableOpacity
+          style={styles.actionTrigger}
+          onPress={(e) => {
+            e.stopPropagation();
+            onActionsPress();
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={`Actions menu for file ${file.name}`}
+          testID={`btn-file-actions-${file.id}`}
+        >
+          <MoreVertical color={theme.colors.textMuted} size={20} />
+        </TouchableOpacity>
+      ) : onPress ? (
+        <ChevronRight color={theme.colors.textMuted} size={18} accessibilityElementsHidden />
+      ) : null}
     </>
   );
 
@@ -110,5 +126,12 @@ const styles = StyleSheet.create({
   fileMeta: {
     color: theme.colors.textMuted,
     fontSize: theme.typography.xs,
+  },
+  actionTrigger: {
+    padding: theme.spacing.xs,
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

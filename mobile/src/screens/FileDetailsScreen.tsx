@@ -12,17 +12,24 @@ import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/nativ
 import type { RouteProp } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { useFileDetails } from '../hooks/useFileDetails';
+import { useAuth } from '../hooks/useAuth';
 import { FileMetadata } from '../components/FileMetadata';
 import { FilePreview } from '../components/FilePreview';
 import { ScreenState } from '../components/ScreenState';
+import { RenameModal } from '../components/modals/RenameModal';
+import { MoveModal } from '../components/modals/MoveModal';
+import { DeleteConfirmModal } from '../components/modals/DeleteConfirmModal';
 import { downloadFileSecurely } from '../services/file-transfer.service';
 import { getErrorMessage } from '../api/client';
 import { theme } from '../styles/theme';
 import type { MainTabParamList } from '../navigation/types';
+import { Edit3, FolderInput, Trash2 } from 'lucide-react-native';
 
 export const FileDetailsScreen: React.FC = () => {
   const route = useRoute<RouteProp<MainTabParamList, 'FileDetails'>>();
   const navigation = useNavigation<BottomTabNavigationProp<MainTabParamList>>();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
 
   const { fileId } = route.params || {};
 
@@ -32,6 +39,11 @@ export const FileDetailsScreen: React.FC = () => {
   const [downloadStatus, setDownloadStatus] = useState<string | null>(null);
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const dismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Admin mutation modal states
+  const [showRenameModal, setShowRenameModal] = useState(false);
+  const [showMoveModal, setShowMoveModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const clearDownloadState = useCallback(() => {
     if (dismissTimerRef.current) {
@@ -118,6 +130,14 @@ export const FileDetailsScreen: React.FC = () => {
     );
   }
 
+  const activeItem = {
+    id: file.id,
+    name: file.name,
+    type: 'file' as const,
+    currentFolderId: file.folderId,
+    mimeType: file.mimeType,
+  };
+
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -174,6 +194,44 @@ export const FileDetailsScreen: React.FC = () => {
               <Text style={styles.errorText}>{downloadError}</Text>
             </View>
           )}
+
+          {/* Admin File Action Row */}
+          {isAdmin && (
+            <View style={styles.adminActionRow} testID="file-details-admin-actions">
+              <TouchableOpacity
+                style={styles.adminActionButton}
+                onPress={() => setShowRenameModal(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Rename file"
+                testID="btn-file-details-rename"
+              >
+                <Edit3 color={theme.colors.primary} size={16} style={styles.adminActionIcon} />
+                <Text style={styles.adminActionText}>Rename</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.adminActionButton}
+                onPress={() => setShowMoveModal(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Move file"
+                testID="btn-file-details-move"
+              >
+                <FolderInput color={theme.colors.primary} size={16} style={styles.adminActionIcon} />
+                <Text style={styles.adminActionText}>Move</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.adminDeleteButton}
+                onPress={() => setShowDeleteModal(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Delete file"
+                testID="btn-file-details-delete"
+              >
+                <Trash2 color="#FFFFFF" size={16} style={styles.adminActionIcon} />
+                <Text style={styles.adminDeleteText}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
         {/* File Metadata */}
@@ -182,6 +240,32 @@ export const FileDetailsScreen: React.FC = () => {
         {/* File Preview */}
         <FilePreview file={file} />
       </ScrollView>
+
+      {/* Admin Mutation Modals */}
+      {isAdmin && (
+        <>
+          <RenameModal
+            visible={showRenameModal}
+            item={activeItem}
+            onClose={() => setShowRenameModal(false)}
+          />
+
+          <MoveModal
+            visible={showMoveModal}
+            item={activeItem}
+            onClose={() => setShowMoveModal(false)}
+          />
+
+          <DeleteConfirmModal
+            visible={showDeleteModal}
+            item={activeItem}
+            onClose={() => setShowDeleteModal(false)}
+            onSuccess={() => {
+              navigation.navigate('Storage', { resetToRoot: false });
+            }}
+          />
+        </>
+      )}
     </View>
   );
 };
@@ -273,5 +357,47 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.xs,
     marginLeft: theme.spacing.xs,
     flex: 1,
+  },
+  adminActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: theme.spacing.md,
+    paddingTop: theme.spacing.md,
+    borderTopColor: theme.colors.border,
+    borderTopWidth: 1,
+  },
+  adminActionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.surfaceElevated,
+    borderColor: theme.colors.border,
+    borderWidth: 1,
+    borderRadius: theme.radii.sm,
+    paddingHorizontal: theme.spacing.sm + 2,
+    paddingVertical: theme.spacing.xs + 2,
+    marginRight: theme.spacing.xs,
+    minHeight: 44,
+  },
+  adminActionIcon: {
+    marginRight: 4,
+  },
+  adminActionText: {
+    color: theme.colors.primary,
+    fontSize: theme.typography.xs,
+    fontWeight: '700',
+  },
+  adminDeleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.danger,
+    borderRadius: theme.radii.sm,
+    paddingHorizontal: theme.spacing.sm + 2,
+    paddingVertical: theme.spacing.xs + 2,
+    minHeight: 44,
+  },
+  adminDeleteText: {
+    color: '#FFFFFF',
+    fontSize: theme.typography.xs,
+    fontWeight: '700',
   },
 });

@@ -29,3 +29,12 @@ export interface FileQueryInput {
   sortBy?: 'name' | 'createdAt' | 'sizeBytes';
   order?: 'asc' | 'desc';
 }
+
+export const ALLOWED_FILE_TYPES: Record<string, string[]> = {
+  'application/pdf': ['.pdf'],
+  'image/jpeg': ['.jpg', '.jpeg'],
+  'image/png': ['.png'],
+  'text/plain': ['.txt'],
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+};

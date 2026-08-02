@@ -292,7 +292,7 @@ describe('Mobile Storage Browser Phase 2 Tests', () => {
     });
   });
 
-  it('9. Admin also has no mutation controls rendered during Phase 2', async () => {
+  it('9. Admin sees mutation controls rendered in Phase 4', async () => {
     jest.spyOn(storageApi, 'getFoldersApi').mockResolvedValue(mockRootFolders);
     jest.spyOn(storageApi, 'getFilesApi').mockResolvedValue(mockRootFiles);
 
@@ -300,10 +300,8 @@ describe('Mobile Storage Browser Phase 2 Tests', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Projects')).toBeTruthy();
-      expect(screen.queryByText(/Upload/i)).toBeNull();
-      expect(screen.queryByText(/New Folder/i)).toBeNull();
-      expect(screen.queryByText(/Rename/i)).toBeNull();
-      expect(screen.queryByText(/Delete/i)).toBeNull();
+      expect(screen.getByText('Upload File')).toBeTruthy();
+      expect(screen.getByText('New Folder')).toBeTruthy();
     });
   });
 });

@@ -31,3 +31,17 @@ jest.mock('react-native-screens', () => {
     ScreenStackHeaderTitleView: () => null,
   };
 });
+
+// Mock NativeSecureDocumentPicker TurboModule spec
+jest.mock('./specs/NativeSecureDocumentPicker', () => ({
+  __esModule: true,
+  default: {
+    isAvailable: jest.fn().mockResolvedValue(true),
+    pickDocument: jest.fn().mockResolvedValue({
+      uri: 'content://com.android.providers.media.documents/document/1',
+      name: 'valid.pdf',
+      type: 'application/pdf',
+      size: 1024,
+    }),
+  },
+}));

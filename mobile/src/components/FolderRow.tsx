@@ -1,6 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, View, Text, StyleSheet } from 'react-native';
-import { Folder, ChevronRight } from 'lucide-react-native';
+import { Folder, ChevronRight, MoreVertical } from 'lucide-react-native';
 import { theme } from '../styles/theme';
 import { formatDate } from '../utils/formatters';
 import type { SafeFolder } from '../types/storage';
@@ -8,9 +8,10 @@ import type { SafeFolder } from '../types/storage';
 interface FolderRowProps {
   folder: SafeFolder;
   onPress: () => void;
+  onActionsPress?: () => void;
 }
 
-export const FolderRow: React.FC<FolderRowProps> = ({ folder, onPress }) => {
+export const FolderRow: React.FC<FolderRowProps> = ({ folder, onPress, onActionsPress }) => {
   const formattedDate = formatDate(folder.createdAt);
 
   return (
@@ -30,7 +31,22 @@ export const FolderRow: React.FC<FolderRowProps> = ({ folder, onPress }) => {
         </Text>
         <Text style={styles.folderMeta}>Folder • Created {formattedDate}</Text>
       </View>
-      <ChevronRight color={theme.colors.textMuted} size={18} accessibilityElementsHidden />
+      {onActionsPress ? (
+        <TouchableOpacity
+          style={styles.actionTrigger}
+          onPress={(e) => {
+            e.stopPropagation();
+            onActionsPress();
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={`Actions menu for folder ${folder.name}`}
+          testID={`btn-folder-actions-${folder.id}`}
+        >
+          <MoreVertical color={theme.colors.textMuted} size={20} />
+        </TouchableOpacity>
+      ) : (
+        <ChevronRight color={theme.colors.textMuted} size={18} accessibilityElementsHidden />
+      )}
     </TouchableOpacity>
   );
 };
@@ -69,5 +85,12 @@ const styles = StyleSheet.create({
   folderMeta: {
     color: theme.colors.textMuted,
     fontSize: theme.typography.xs,
+  },
+  actionTrigger: {
+    padding: theme.spacing.xs,
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
