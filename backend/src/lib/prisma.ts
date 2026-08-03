@@ -1,9 +1,10 @@
 import pg from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../generated/prisma/index.js";
-import { env } from "../config/env.js";
+import { env, getEffectiveDatabaseUrl } from "../config/env.js";
 
-const pool = new pg.Pool({ connectionString: env.DATABASE_URL });
+const dbUrl = getEffectiveDatabaseUrl();
+const pool = new pg.Pool({ connectionString: dbUrl });
 const adapter = new PrismaPg(pool);
 
 declare global {

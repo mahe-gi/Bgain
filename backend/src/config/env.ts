@@ -1,6 +1,11 @@
 import dotenv from "dotenv";
+import path from "path";
 import { z } from "zod";
+import { validateTestDatabaseSafety } from "./db-safety.js";
 
+if (process.env.NODE_ENV === "test") {
+  dotenv.config({ path: path.resolve(process.cwd(), ".env.test") });
+}
 dotenv.config();
 
 const envSchema = z.object({
@@ -15,6 +20,7 @@ const envSchema = z.object({
     .default("http://localhost:5173,http://localhost:3000")
     .transform((val) => val.split(",").map((origin) => origin.trim()).filter(Boolean)),
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
+  TEST_DATABASE_URL: z.string().optional(),
   JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 characters long"),
   JWT_EXPIRES_IN: z.string().default("1h"),
   STORAGE_ENDPOINT: z
@@ -49,3 +55,10 @@ const parseEnv = () => {
 };
 
 export const env = parseEnv();
+
+export function getEffectiveDatabaseUrl(): string {
+  if (env.NODE_ENV === "test") {
+    return validateTestDatabaseSafety(env.TEST_DATABASE_URL, env.DATABASE_URL);
+  }
+  return env.DATABASE_URL;
+}
