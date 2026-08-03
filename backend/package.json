@@ -6,11 +6,12 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "npm run prisma:generate && tsc",
+    "build": "prisma generate && tsc && rm -rf dist/generated && cp -R src/generated dist/generated",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/**/*.ts tests/**/*.ts prisma/**/*.ts",
     "test": "vitest run",
+    "test:unit": "vitest run tests/db_safety_guard.test.ts",
     "prisma:generate": "prisma generate",
     "prisma:validate": "prisma validate",
     "prisma:migrate": "prisma migrate dev",
@@ -60,6 +61,6 @@
     "vitest": "^3.0.4"
   },
   "engines": {
-    "node": ">=24.0.0"
+    "node": "24.x"
   }
 }
